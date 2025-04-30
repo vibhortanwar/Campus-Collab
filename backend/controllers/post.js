@@ -1,0 +1,201 @@
+const post = require("../models/post");
+const { postModel } = require("../models/post");
+const { userModel } = require("../models/user");
+const { notificationModel } = require("../models/notification")
+const createPost = async (req, res) => {
+    try {
+        const { text, img, date, time } = req.body;
+        const userId = req.user._id;
+
+        if (!text && !img) {
+            return res.status(400).json({ error: "Post must have text or image" });
+        }
+
+        let imageUrl = null;
+        if (img) {
+            const uploadedResponse = await cloudinary.uploader.upload(img);
+            imageUrl = uploadedResponse.secure_url;
+        }
+
+        // Convert IST date + time to UTC
+        let expiresAt = null;
+        if (date && time) {
+            const [year, month, day] = date.split("-").map(Number); // e.g. "2025-04-26"
+            const [hours, minutes] = time.split(":").map(Number);   // e.g. "23:00"
+
+            const istDate = new Date(Date.UTC(year, month - 1, day, hours - 5, minutes - 30));
+            expiresAt = istDate;
+        }
+
+        const newPost = new postModel({
+            user: userId,
+            text,
+            img: imageUrl,
+            expiresAt
+        });
+
+        await newPost.save();
+        res.status(201).json(newPost);
+    } catch (error) {
+        console.error("Error creating post:", error.message);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+};
+
+const deletePost = async (req, res) => {
+    try {
+        const post = await postModel.findById(req.params.id);
+        if(!post) {
+            return res.status(404).json({error: "Post not found"})
+        }
+        if(post.user.toString() !== req.user._id.toString()){
+            return res.status(401).json({error: "You are not authorized to delete this post"});
+        }
+        if(post.image) {
+            const imgId = post.img.split("/").pop().split(".")[0];
+            await cloudinary.uploader.destroy(imgId);
+        }
+
+        await postModel.findByIdAndDelete(req.params.id);
+
+        res.status(200).json({message: "Post deleted Successfully"});
+    }catch(error){
+        console.log("Error in deletePost controller: ", error);
+        res.status(500).json({error: "Internal server error"});
+    }
+};
+
+const applyConcilePost = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { id: postId } = req.params;
+
+        const post = await postModel.findById(postId);
+        if (!post) return res.status(404).json({ error: "Post not found" });
+
+        const hasApplied = post.applications.includes(userId);
+
+        if (hasApplied) {
+            // Remove user from applications
+            await postModel.updateOne(
+                { _id: postId },
+                { $pull: { applications: userId } }
+            );
+            await userModel.updateOne({_id: userId}, {$push: { appliedPosts: postId }});
+            await post.save();
+            const updatedPost = await postModel.findById(postId);
+            const applicationCount = updatedPost.applications.length;
+
+            if (applicationCount === 0) {
+                // Delete notification if no one has applied
+                await notificationModel.deleteOne({
+                    to: post.user,
+                    type: "applied",
+                    post: postId
+                });
+            } else {
+                // Update count
+                await notificationModel.updateOne(
+                    { to: post.user, type: "applied", post: postId },
+                    { $set: { count: applicationCount } }
+                );
+            }
+
+            return res.status(200).json({ message: "Application conciled successfully" });
+
+        } else {
+            // Add user to applications
+            post.applications.push(userId);
+            await post.save();
+
+            const applicationCount = post.applications.length;
+
+            const existingNotification = await notificationModel.findOne({
+                to: post.user,
+                type: "applied",
+                post: postId
+            });
+
+            if (existingNotification) {
+                existingNotification.count = applicationCount;
+                await existingNotification.save();
+            } else {
+                const notification = new notificationModel({
+                    from: userId,
+                    to: post.user,
+                    type: "applied",
+                    post: postId,
+                    count: applicationCount
+                });
+                await notification.save();
+            }
+
+            return res.status(200).json({ message: "Applied for the post successfully" });
+        }
+    } catch (error) {
+        console.log("Error in applyConcilePost controller:", error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+const getAllPosts = async (req, res) => {
+    try{
+        const posts = await postModel.find().sort({createdAt: -1}).populate({
+            path: "user",
+            select:"-password"
+        });
+
+        if (posts.length === 0) {
+            return res.status(200).json([]);
+        }
+        res.status(200).json(posts);
+    }catch(error){
+        console.log("Error in get All posts controller: ", error);
+        res.status(500).json({error: "Internal server error"});
+    }
+};
+
+const getAppliedPosts = async (req,res) => {
+    const userId = req.params.id;
+    try{
+        const user = await userModel.findById(userId);
+        if(!user) return res.status(404).json({error: "User not found"});
+        
+        const appliedPosts = await postModel.find({_id: {$in: user.appliedPosts}})
+        .populate({
+            path: "user",
+            select: "-password"
+        });
+
+        res.status(200).json(appliedPosts);
+    }catch(error){
+        console.log("Error in getAppliedPosts controller: ", error);
+        res.status(500).json({error: "Internal server error" });
+    }
+}
+
+const getUserPosts = async (req, res) => {
+    try {
+        const { enrollNo } = req.params;
+
+        const user = await userModel.findOne({enrollNo});
+
+        const posts = await postModel.find({user:user._id}).sort({createdAt: -1}).populate({
+            path: "user",
+            select: "-password"
+        })
+        res.status(200).json(posts);
+    } catch (error) {
+        console.log("Error in getUserPosts controller: ", error);
+        res.status(500).json({error: "Internal server error"})
+    }
+}
+
+module.exports = {
+    createPost: createPost,
+    deletePost: deletePost,
+    applyConcilePost: applyConcilePost,
+    getAllPosts: getAllPosts,
+    getAppliedPosts: getAppliedPosts,
+    getUserPosts: getUserPosts
+}  
