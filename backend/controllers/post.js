@@ -1,6 +1,7 @@
 const post = require("../models/post");
 const { postModel } = require("../models/post");
 const { userModel } = require("../models/user");
+const cloudinary = require("cloudinary").v2;
 const { notificationModel } = require("../models/notification")
 const createPost = async (req, res) => {
     try {

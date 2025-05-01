@@ -1,4 +1,6 @@
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import React, { useRef, useState } from 'react'
+import toast from 'react-hot-toast';
 
 const CreatePost = () => {
   const [text, setText] = useState("");
@@ -6,15 +8,43 @@ const CreatePost = () => {
 
   const imgRef = useRef(null);
 
-  const isPending = false;
-  const isError = false;
+  const { data: authUser } = useQuery({
+      queryKey: ["authUser"],
+      queryFn: async () => {
+        const res = await fetch("/api/auth/me");
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Something went wrong");
+        return data;
+      },
+    });
+  const queryClient = useQueryClient();
 
-  const data = {
-    profileImg: "https://cdn-icons-png.flaticon.com/512/6522/6522516.png"
-  }
+  const {mutate:createPost, isPending, isError} = useMutation({
+    mutationFn: async ({text,img}) => {
+      try{
+        const res = await fetch("/api/posts/create",{
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({text,img}),
+        });
+        const data = await res.json();
+        if(!res.ok){
+          throw new Error(data.error || "Something went wrong")
+        }
+        return data
+      }catch(error){
+        toast.success("Post created successfully");
+        queryClient.invalidateQueries({queryKey: ['posts']});
+      }
+    }
+  })
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    createPost({text, img})
     alert("Post created successfully");
   }
 
@@ -31,7 +61,7 @@ const CreatePost = () => {
   return (
     <div>
       <div>
-        <div><img src = {data.profileImg}/></div>
+        <div><img src = {authUser.profileImg}/></div>
       </div>
       <form onSubmit={handleSubmit}>
         <textarea placeholder='What is happening?!'

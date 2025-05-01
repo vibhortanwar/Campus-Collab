@@ -2,31 +2,31 @@ import Post from "./Post";
 import PostSkeleton from "../skeletons/PostSkeleton";
 import { useQuery } from "@tanstack/react-query";
 
-const Posts = () => {
-	
+function Posts() {
+
 	const getPostEndpoint = () => {
-		return "/api/posts/all"; 
-	}
+		return "/api/posts/all";
+	};
 
 	const POST_ENDPOINT = getPostEndpoint();
 
-	const {data: posts, isLoading}= useQuery({
+	const { data: posts, isLoading } = useQuery({
 		queryKey: ["posts"],
-		queryFn: async()=>{
-			try{
+		queryFn: async () => {
+			try {
 				const res = await fetch(POST_ENDPOINT);
 				const data = await res.json();
 
-				if(!res.ok){
-					throw new Error(data.error || "Something went wrong")
+				if (!res.ok) {
+					throw new Error(data.error || "Something went wrong");
 				}
 
 				return data;
-			}catch(error){
+			} catch (error) {
 				toast.error(error.message || "Something went wrong");
 			}
 		}
-	})
+	});
 	return (
 		<>
 			{isLoading && (
@@ -46,5 +46,5 @@ const Posts = () => {
 			)}
 		</>
 	);
-};
+}
 export default Posts;

@@ -5,8 +5,17 @@ import {Link} from 'react-router-dom';
 
 const Navbar = () => {
   const queryClient = useQueryClient();
+  const { data: authUser } = useQuery({
+    queryKey: ["authUser"],
+    queryFn: async () => {
+      const res = await fetch("/api/auth/me");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Something went wrong");
+      return data;
+    },
+  });
   const {mutate:logout, isPending, isError, error} = useMutation({
-    mutationFn: async() => {
+    mutationFn: async({}) => {
         try {
             const res = await fetch("/api/auth/logout",{
                 method:"POST",
@@ -29,7 +38,7 @@ const Navbar = () => {
         toast.error("Logout failed");
     }
   });
-  const {data:authUser}=useQuery({queryKey: ["authUser"]})
+
   const data={}
     return (
     <div>

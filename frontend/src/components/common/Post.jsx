@@ -5,8 +5,20 @@ import {Link} from 'react-router-dom';
 import LoadingSpinner from './LoadingSpinner';
 
 const Post = ({post}) => {
-  const {data:authUser} = useQuery({queryKey: ['authUser']});
+  const { data: authUser } = useQuery({
+      queryKey: ["authUser"],
+      queryFn: async () => {
+        const res = await fetch("/api/auth/me");
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Something went wrong");
+        return data;
+      },
+    });
   const queryClient = useQueryClient();
+  const postOwner = post.user;
+  const isApplied = false;
+  const isMyPost = authUser._id === post.user._id;
+  const formattedDate = "1h";
   const {mutate:deletePost, isPending} = useMutation({
     mutationFn: async () => {
       try {
@@ -29,10 +41,7 @@ const Post = ({post}) => {
       queryClient.invalidateQueries({queryKey: ["posts"]})
     }
   })
-  const postOwner = post.user;
-  const isApplied = false;
-  const isMyPost = authUser._id === post.user._id;
-  const formattedDate = "1h";
+
   const handleDeletePost = () => {
     deletePost();
   };
@@ -65,7 +74,7 @@ const Post = ({post}) => {
           )}
         </div>
         <div>
-          <spam>{post.text}</spam>
+          <span>{post.text}</span>
           {post.img && (
             <img src={post.img} alt=''/>
           )}

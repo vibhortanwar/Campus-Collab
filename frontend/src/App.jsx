@@ -23,7 +23,7 @@ function App() {
         console.log("authUser is here:", data);
         return data;
       }catch(error){
-        throw new Error(error)
+        throw new Error(error);
       }
     }, retry: false,
   });
