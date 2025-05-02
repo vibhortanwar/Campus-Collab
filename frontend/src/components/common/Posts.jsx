@@ -1,16 +1,25 @@
 import Post from "./Post";
 import PostSkeleton from "../skeletons/PostSkeleton";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 
-function Posts() {
+function Posts({feedType, enrollNo ,userId}) {
 
 	const getPostEndpoint = () => {
-		return "/api/posts/all";
+		switch(feedType){
+			case "posts":
+				return `/api/posts/user/${enrollNo}`;
+			case "applications":
+				return `/api/posts/applied/${userId}`;
+			default:
+				return "/api/posts/all";
+		}
+
 	};
 
 	const POST_ENDPOINT = getPostEndpoint();
 
-	const { data: posts, isLoading } = useQuery({
+	const { data: posts, isLoading, refetch } = useQuery({
 		queryKey: ["posts"],
 		queryFn: async () => {
 			try {
@@ -27,6 +36,9 @@ function Posts() {
 			}
 		}
 	});
+	useEffect(() => {
+		refetch();
+	}, [feedType, refetch, enrollNo]);
 	return (
 		<>
 			{isLoading && (

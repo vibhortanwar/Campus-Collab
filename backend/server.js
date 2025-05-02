@@ -25,7 +25,7 @@ app.use(express.urlencoded({ limit:'50mb', extended: true }));
 app.use(cookieParser());
 
 app.use("/api/auth", authRouter);
-app.use("/api/users", userRouter);
+app.use("/api/user", userRouter);
 app.use("/api/posts", postRouter);
 app.use("/api/notifications", notificationRouter);
 

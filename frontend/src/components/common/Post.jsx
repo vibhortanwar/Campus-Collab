@@ -3,6 +3,8 @@ import React from 'react';
 import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 import LoadingSpinner from './LoadingSpinner';
+import { formatPostDate } from "../../utils/date";
+
 
 const Post = ({ post }) => {
   const queryClient = useQueryClient();
@@ -22,7 +24,7 @@ const Post = ({ post }) => {
   const isApplied = post.applications?.some(app =>
     typeof app === 'object' ? app._id === authUser?._id : app === authUser?._id
   );
-  const formattedDate = "1h";
+  const formattedDate = formatPostDate(post.createdAt);
 
   const { mutate: deletePost, isPending: isDeleting } = useMutation({
     mutationFn: async () => {
@@ -98,7 +100,7 @@ const Post = ({ post }) => {
           <span>
             <Link to={`/profile/${postOwner.enrollNo}`}>@{postOwner.enrollNo}</Link>
             <span> · </span>
-            <span>1h</span>
+            <span>{formattedDate}</span>
           </span>
           {isMyPost && (
             <span>
