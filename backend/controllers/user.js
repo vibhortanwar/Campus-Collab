@@ -20,52 +20,71 @@ const getUserProfile = async (req, res) => {
     }
 };
 
-const updateUser = async (req, res)=>{
-    console.log(req.body);
-    const { email, currentPassword, newPassword, confirm, fullName } = req.body;
-    let { profileImg } = req.body;
+const updateUser = async (req, res) => {
+	const { email, currentPassword, newPassword, confirm, fullName, profileImg } = req.body;
+	const userId = req.user._id;
 
-    const userId = req.user._id;
+	try {
+		let user = await userModel.findById(userId);
+		if (!user) {
+			return res.status(404).json({ error: "User not found!" });
+		}
 
-    try{
-        let user = await userModel.findById(userId);
-        if(!user) return res.status(404).json({ message: "User not found!" });
-        if(newPassword || currentPassword || confirm){
-            if(currentPassword && newPassword && confirm){
-                const isMatch = await bcrypt.compare(currentPassword, user.password);
-                if(!isMatch) return res.status.json({error:"Current password is incorrect"});
-                if(newPassword.length<3 || newPassword.length>20){
-                    return res.status(400).json({ error: "Paaword must be at least 6 character long" });
-                }
-                if(newPassword != confirm) return res.status(400).json({ error: "New Passwords do not Match!" });
-                const salt = await bcrypt.genSalt(10);
-                user.password = await bcrypt.hash(newPassword, salt);
-            }else{
-                return res.status(400).json({error: "Please provide complete information"});
-            }
-        }
-        if(profileImg){
-            if(user.profileImg){
-                await  cloudinary.uploader.destroy(user.profileImg.split("/").pop().split("."))
-            }
-            const uploadedResponse = await cloudinary.uploader.upload(profileImg);
-            profileImg=uploadedResponse.secure_url;
-        }
+		// Handle password update
+		if (currentPassword || newPassword || confirm) {
+			if (currentPassword && newPassword && confirm) {
+				const isMatch = await bcrypt.compare(currentPassword, user.password);
+				if (!isMatch) {
+					return res.status(400).json({ error: "Current password is incorrect" });
+				}
+				if (newPassword.length < 6 || newPassword.length > 20) {
+					return res.status(400).json({ error: "Password must be 6-20 characters long" });
+				}
+				if (newPassword !== confirm) {
+					return res.status(400).json({ error: "New passwords do not match!" });
+				}
 
-        user.fullName = fullName || user.fullName;
-        user.profileImg = profileImg || user.profileImg;
+				const salt = await bcrypt.genSalt(10);
+				user.password = await bcrypt.hash(newPassword, salt);
+			} else {
+				return res.status(400).json({ error: "Please provide all password fields" });
+			}
+		}
 
-        user = await user.save();
+		// Handle profile image update
+		if (profileImg && profileImg.startsWith("data:image")) {
+			// Delete old image if present
+			if (user.profileImg && user.profileImg.includes("cloudinary")) {
+				const publicId = user.profileImg
+					.split("/")
+					.pop()
+					.split(".")[0]; // Extract the Cloudinary public ID
 
-        user.password = null;
+				await cloudinary.uploader.destroy(publicId);
+			}
 
-        return res.status(200).json(user);
+			// Upload new image
+			const uploadRes = await cloudinary.uploader.upload(profileImg, {
+				folder: "user-profiles", // Optional: organize uploads in a folder
+			});
+			user.profileImg = uploadRes.secure_url;
+		}
 
-    }catch(error){
-        console.log("Error in updateUser: ", error.message);
-        res.status(500).json({ error: error.message });
-    }
-}
+		// Update other profile fields
+		user.fullName = fullName || user.fullName;
+		user.email = email || user.email;
+
+		await user.save();
+
+		const updatedUser = user.toObject();
+		delete updatedUser.password; // Remove password from response
+
+		return res.status(200).json(updatedUser);
+	} catch (error) {
+		console.error("Error in updateUser:", error.message);
+		return res.status(500).json({ error: "Server error: " + error.message });
+	}
+};
 
 module.exports = {
     getUserProfile:getUserProfile,

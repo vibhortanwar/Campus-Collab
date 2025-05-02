@@ -1,6 +1,10 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { toast } from "react-hot-toast";
 
 const EditProfileModal = () => {
+	const queryClient = useQueryClient();
+
 	const [formData, setFormData] = useState({
 		fullName: "",
 		enrollNo: "",
@@ -8,6 +12,49 @@ const EditProfileModal = () => {
 		newPassword: "",
 		confirmPassword: "",
 		currentPassword: "",
+	});
+
+	const { mutate: updateProfile, isPending: isUpdatingProfile } = useMutation({
+		mutationFn: async (updatedData) => {
+			const res = await fetch(`/api/user/update`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(updatedData),
+			});
+
+			const data = await res.json();
+			if (!res.ok) {
+				throw new Error(data.error || "Something went wrong");
+			}
+			return data;
+		},
+		onSuccess: async (_, updatedData) => {
+			toast.success("Profile updated successfully");
+
+			await Promise.all([
+				queryClient.invalidateQueries({ queryKey: ["authUser"] }),
+				queryClient.invalidateQueries({ queryKey: ["userProfile", updatedData.enrollNo] }),
+			]);
+
+			document.getElementById("edit_profile_modal").close();
+
+			setFormData({
+				fullName: "",
+				enrollNo: "",
+				email: "",
+				newPassword: "",
+				confirmPassword: "",
+				currentPassword: "",
+			});
+
+			// ✅ Force page reload to reflect updated profile
+			window.location.reload();
+		},
+		onError: (error) => {
+			toast.error(error.message);
+		},
 	});
 
 	const handleInputChange = (e) => {
@@ -20,7 +67,7 @@ const EditProfileModal = () => {
 			alert("New password and confirm password do not match.");
 			return;
 		}
-		alert("Profile updated successfully");
+		updateProfile(formData);
 	};
 
 	return (
@@ -31,6 +78,7 @@ const EditProfileModal = () => {
 			>
 				Edit profile
 			</button>
+
 			<dialog id='edit_profile_modal' className='modal'>
 				<div className='modal-box border rounded-md border-gray-700 shadow-md'>
 					<h3 className='font-bold text-lg my-3'>Update Profile</h3>
@@ -87,11 +135,15 @@ const EditProfileModal = () => {
 								onChange={handleInputChange}
 							/>
 						</div>
-						<button className='btn btn-primary rounded-full btn-sm text-white'>
-							Update
+						<button
+							className='btn btn-primary rounded-full btn-sm text-white'
+							disabled={isUpdatingProfile}
+						>
+							{isUpdatingProfile ? "Updating..." : "Update"}
 						</button>
 					</form>
 				</div>
+
 				<form method='dialog' className='modal-backdrop'>
 					<button className='outline-none'>close</button>
 				</form>

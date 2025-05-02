@@ -10,7 +10,7 @@ import { POSTS } from "../../utils/db/dummy";
 import { FaArrowLeft } from "react-icons/fa6";
 import { IoCalendarOutline } from "react-icons/io5";
 import { MdEdit } from "react-icons/md";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import Post from "../../components/common/Post";
 
@@ -42,7 +42,44 @@ const ProfilePage = () => {
 			}
 		},
 	});
-
+	const { mutate: updateProfile, isPending: isUpdatingProfile } = useMutation({
+		mutationFn: async () => {
+			try {
+				const res = await fetch(`/api/user/update`, {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						profileImg,
+						fullName: user.fullName, // ✅ Send fullName if required by backend
+					}),
+				});
+	
+				const data = await res.json();
+				if (!res.ok) {
+					throw new Error(data.error || "Something went wrong");
+				}
+				return data;
+			} catch (error) {
+				throw new Error(error.message);
+			}
+		},
+		onSuccess: async () => {
+			toast.success("Profile updated successfully");
+	
+			setProfileImg(null); // ✅ Clear selected image
+	
+			await Promise.all([
+				queryClient.invalidateQueries({ queryKey: ["authUser"] }),
+				queryClient.invalidateQueries({ queryKey: ["userProfile", enrollNo] }), // ✅ Invalidate the right user profile
+			]);
+		},
+		onError: (error) => {
+			toast.error(error.message); // ✅ Show proper error message
+		},
+	});
+	
 	const handleImgChange = (e) => {
 		const file = e.target.files[0];
 		if (file) {
@@ -53,7 +90,14 @@ const ProfilePage = () => {
 			reader.readAsDataURL(file);
 		}
 	};
-
+	const handleProfileUpdate = () => {
+		if (profileImg) {
+			updateProfile();
+		} else {
+			toast.error("Please select an image first.");
+		}
+	};
+	
 	return (
 		<div className='flex-[4_4_0] border-r border-gray-700 min-h-screen'>
 			{isLoading && <ProfileHeaderSkeleton />}
@@ -99,9 +143,9 @@ const ProfilePage = () => {
 						{profileImg && (
 							<button
 								className='btn btn-primary rounded-full btn-sm text-white px-4 ml-2'
-								onClick={() => alert("Profile updated successfully")}
+								onClick={handleProfileUpdate}
 							>
-								Update
+								{isUpdatingProfile?"Updateing..." : "update"}
 							</button>
 						)}
 					</div>
