@@ -5,10 +5,10 @@ const { generateTokenAndSetCookie } = require("../lib/utils/generateToken")
 
 const signup = async (req, res) => {
     const requiredBody = z.object({
-        email: z.string().min(3).max(100).email(),
-        password: z.string().min(3).max(30),
-        fullName: z.string().min(3).max(100),
-        enrollNo: z.string().min(3).max(20)
+        email: z.string().email().regex(/^[a-zA-Z0-9._%+-]+@ipu\.ac\.in$/, "Must be an @ipu.ac.in email"),
+        password: z.string().min(8, {message : "Password must be atleast 8 characters long"}).max(30, {message: "Password must be atmost 30 characters"}),
+        fullName: z.string(),
+        enrollNo: z.string().min(11, {message : "Enter valid Enrollment No."}).max(11, {message : "Enter valid Enrollment No."}),
     });
 
     const parsedDataWithSuccess = requiredBody.safeParse(req.body);

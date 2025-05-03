@@ -22,7 +22,6 @@ const userSchema = new Schema({
     },
     profileImg: {
         type: String,
-        default: "https://cdn-icons-png.flaticon.com/512/6522/6522516.png",
     },
     cvFile: {
         type: String, // This will store the PDF URL

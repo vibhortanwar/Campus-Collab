@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
 import LoadingSpinner from './LoadingSpinner';
 import { formatPostDate } from "../../utils/date";
-
+import profile from "../../assets/Profile.jpg";
 const ViewApplicantsModal = ({ applicants, isOpen, closeModal }) => {
   return (
     <dialog open={isOpen} className="modal">
@@ -121,7 +121,7 @@ const Post = ({ post }) => {
       <div className="flex items-center mb-3 gap-3">
         <Link to={`/profile/${postOwner.enrollNo}`}>
           <img
-            src={postOwner.profileImg}
+            src={postOwner.profileImg || profile}
             alt="profile"
             className="w-10 h-10 rounded-full object-cover"
           />

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router-dom";
+import profile from "../../assets/Profile.jpg"
 
 const Navbar = () => {
 	const queryClient = useQueryClient();
@@ -17,25 +18,6 @@ const Navbar = () => {
 		},
 	});
 
-	const { mutate: logout, isPending } = useMutation({
-		mutationFn: async () => {
-			const res = await fetch("/api/auth/logout", {
-				method: "POST",
-			});
-			const data = await res.json();
-			if (!res.ok) throw new Error(data.error || "Something went wrong");
-			return data;
-		},
-		onSuccess: () => {
-			toast.success("Logout Successful");
-			queryClient.setQueryData(["authUser"], null); // Clear cached user
-			navigate("/login");
-		},
-		onError: (error) => {
-			toast.error(error.message);
-		},
-	});
-
 	return (
 		<div className="flex justify-between items-center p-4 border-b border-gray-700 bg-black text-white">
 			<div className="flex gap-6 items-center">
@@ -47,7 +29,7 @@ const Navbar = () => {
 				<div className="flex items-center gap-4">
 					<Link to={`/profile/${authUser.enrollNo}`}>
 						<img
-							src={authUser.profileImg || "/avatar-placeholder.png"}
+							src={authUser.profileImg || profile}
 							className="h-8 w-8 rounded-full object-cover"
 							alt="Profile"
 						/>
@@ -56,13 +38,6 @@ const Navbar = () => {
 						<p className="font-semibold">{authUser.fullName}</p>
 						<p className="text-gray-400">{authUser.enrollNo}</p>
 					</div>
-					<button
-						className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition"
-						disabled={isPending}
-						onClick={logout}
-					>
-						{isPending ? "Logging out..." : "Logout"}
-					</button>
 				</div>
 			)}
 		</div>

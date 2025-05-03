@@ -5,43 +5,52 @@ const cloudinary = require("cloudinary").v2;
 const { notificationModel } = require("../models/notification")
 const createPost = async (req, res) => {
     try {
-        const { text, img, date, time } = req.body;
-        const userId = req.user._id;
-
-        if (!text && !img) {
-            return res.status(400).json({ error: "Post must have text or image" });
-        }
-
-        let imageUrl = null;
-        if (img) {
-            const uploadedResponse = await cloudinary.uploader.upload(img);
-            imageUrl = uploadedResponse.secure_url;
-        }
-
-        // Convert IST date + time to UTC
-        let expiresAt = null;
-        if (date && time) {
-            const [year, month, day] = date.split("-").map(Number); // e.g. "2025-04-26"
-            const [hours, minutes] = time.split(":").map(Number);   // e.g. "23:00"
-
-            const istDate = new Date(Date.UTC(year, month - 1, day, hours - 5, minutes - 30));
-            expiresAt = istDate;
-        }
-
-        const newPost = new postModel({
-            user: userId,
-            text,
-            img: imageUrl,
-            expiresAt
+      const { text, img, date, time } = req.body;
+      const userId = req.user._id;
+  
+      if (!text && !img) {
+        return res.status(400).json({ error: "Post must have text or image" });
+      }
+  
+      let imageUrl = null;
+      let imagePublicId = null;
+  
+      // ✅ Upload image to Cloudinary if exists
+      if (img) {
+        const uploadedResponse = await cloudinary.uploader.upload(img, {
+          folder: "posts",
         });
-
-        await newPost.save();
-        res.status(201).json(newPost);
+        imageUrl = uploadedResponse.secure_url;
+        imagePublicId = uploadedResponse.public_id;
+      }
+  
+      // ✅ Convert IST date & time to UTC
+      let expiresAt = null;
+      if (date && time) {
+        const [year, month, day] = date.split("-").map(Number);
+        const [hours, minutes] = time.split(":").map(Number);
+  
+        // Convert IST (UTC+5:30) to UTC
+        const istDate = new Date(Date.UTC(year, month - 1, day, hours - 5, minutes - 30));
+        expiresAt = istDate;
+      }
+  
+      // ✅ Create the post
+      const newPost = new postModel({
+        user: userId,
+        text,
+        img: imageUrl,
+        imagePublicId, // <== store this for later deletion
+        expiresAt,
+      });
+  
+      await newPost.save();
+      res.status(201).json(newPost);
     } catch (error) {
-        console.error("Error creating post:", error.message);
-        res.status(500).json({ error: "Internal Server Error" });
+      console.error("Error creating post:", error.message);
+      res.status(500).json({ error: "Internal Server Error" });
     }
-};
+  };
 
 const deletePost = async (req, res) => {
     try {

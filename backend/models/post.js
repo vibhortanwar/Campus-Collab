@@ -22,6 +22,10 @@ const postSchema = new mongoose.Schema({
     expiresAt: {
         type: Date,
         default: null
+    },
+    imagePublicId: {
+        type: String,
+        default: null
     }
 },{timestamps: true})
 
