@@ -77,13 +77,20 @@ const applyConcilePost = async (req, res) => {
         const hasApplied = post.applications.includes(userId);
 
         if (hasApplied) {
-            // Remove user from applications
+            // ✅ WITHDRAW application
             await postModel.updateOne(
                 { _id: postId },
                 { $pull: { applications: userId } }
             );
-            await userModel.updateOne({_id: userId}, {$push: { appliedPosts: postId }});
+
+            // ✅ Remove post from user's appliedPosts
+            await userModel.updateOne(
+                { _id: userId },
+                { $pull: { appliedPosts: postId } }
+            );
+
             await post.save();
+
             const updatedPost = await postModel.findById(postId);
             const applicationCount = updatedPost.applications.length;
 
@@ -95,7 +102,7 @@ const applyConcilePost = async (req, res) => {
                     post: postId
                 });
             } else {
-                // Update count
+                // Update application count in notification
                 await notificationModel.updateOne(
                     { to: post.user, type: "applied", post: postId },
                     { $set: { count: applicationCount } }
@@ -105,9 +112,15 @@ const applyConcilePost = async (req, res) => {
             return res.status(200).json({ message: "Application conciled successfully" });
 
         } else {
-            // Add user to applications
+            // ✅ APPLY to post
             post.applications.push(userId);
             await post.save();
+
+            // ✅ Add post to user's appliedPosts
+            await userModel.updateOne(
+                { _id: userId },
+                { $addToSet: { appliedPosts: postId } } // addToSet prevents duplicates
+            );
 
             const applicationCount = post.applications.length;
 
@@ -138,6 +151,7 @@ const applyConcilePost = async (req, res) => {
         return res.status(500).json({ error: "Internal server error" });
     }
 };
+
 
 const getAllPosts = async (req, res) => {
     try{
@@ -191,6 +205,37 @@ const getUserPosts = async (req, res) => {
         res.status(500).json({error: "Internal server error"})
     }
 }
+const getApplicantsForPost = async (req, res) => {
+    const { postId } = req.params;
+    const userId = req.user._id; // Assuming `req.user` is populated by the `protectRoute` middleware
+  
+    try {
+      // Find the post by ID
+      const post = await postModel.findById(postId).populate('applications');
+  
+      if (!post) {
+        return res.status(404).json({ error: 'Post not found' });
+      }
+  
+      // Check if the authenticated user is the owner of the post
+      if (post.user.toString() !== userId.toString()) {
+        return res.status(403).json({ error: 'You are not authorized to view applicants for this post' });
+      }
+  
+      // Return the list of applicants
+      const applicants = post.applications.map(applicant => ({
+        _id: applicant._id,
+        fullName: applicant.fullName,
+        enrollNo: applicant.enrollNo,
+        profileImg: applicant.profileImg,
+      }));
+  
+      res.status(200).json({ applicants });
+    } catch (error) {
+      console.error("Error fetching applicants:", error);
+      res.status(500).json({ error: 'Something went wrong' });
+    }
+  };
 
 module.exports = {
     createPost: createPost,
@@ -198,5 +243,6 @@ module.exports = {
     applyConcilePost: applyConcilePost,
     getAllPosts: getAllPosts,
     getAppliedPosts: getAppliedPosts,
-    getUserPosts: getUserPosts
+    getUserPosts: getUserPosts,
+    getApplicantsForPost: getApplicantsForPost
 }  

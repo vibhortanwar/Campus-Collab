@@ -1,39 +1,48 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
+
 const userSchema = new Schema({
     email: {
-        type:String,
+        type: String,
         unique: true,
-        required:true,
+        required: true,
     },
-    enrollNo:{
-        type:String,
-        unique:true,
+    enrollNo: {
+        type: String,
+        unique: true,
         required: true
     },
-    fullName:{
-        type:String,
-        required:true,
-    },
-    password:{
+    fullName: {
         type: String,
-        required:true,
+        required: true,
     },
-    profileImg:{
+    password: {
         type: String,
-        default:"https://cdn-icons-png.flaticon.com/512/6522/6522516.png",
+        required: true,
     },
-    appliedPosts:[
+    profileImg: {
+        type: String,
+        default: "https://cdn-icons-png.flaticon.com/512/6522/6522516.png",
+    },
+    cvFile: {
+        type: String, // This will store the PDF URL
+        default: null
+    },
+    ipuRankLink: {
+        type: String,
+        default: null
+    },    
+    appliedPosts: [
         {
             type: mongoose.Schema.Types.ObjectId,
-            ref:"Post",
-            default:[],
+            ref: "Post",
+            default: [],
         }
     ]
-}, {timestamps:true});
+}, { timestamps: true });
 
 const userModel = mongoose.model("User", userSchema);
 
-module.exports={
+module.exports = {
     userModel: userModel
-}
+};

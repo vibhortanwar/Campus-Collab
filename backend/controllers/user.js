@@ -21,7 +21,7 @@ const getUserProfile = async (req, res) => {
 };
 
 const updateUser = async (req, res) => {
-	const { email, currentPassword, newPassword, confirm, fullName, profileImg } = req.body;
+	const { email, currentPassword, newPassword, confirm, fullName, profileImg, cvFile, ipuRankLink } = req.body;
 	const userId = req.user._id;
 
 	try {
@@ -69,7 +69,29 @@ const updateUser = async (req, res) => {
 			});
 			user.profileImg = uploadRes.secure_url;
 		}
-
+		if (cvFile && cvFile.startsWith("data:application/pdf")) {
+			// Delete old CV file if present and hosted on Cloudinary
+			if (user.cvFile && user.cvFile.includes("cloudinary")) {
+				const publicId = user.cvFile
+					.split("/")
+					.pop()
+					.split(".")[0]; // Extract Cloudinary public ID
+		
+				await cloudinary.uploader.destroy(publicId, { resource_type: "raw" });
+			}
+		
+			// Upload new CV
+			const uploadCv = await cloudinary.uploader.upload(cvFile, {
+				resource_type: "raw", // Important for non-image files
+				folder: "user-cvs",   // Optional: organize uploads
+				public_id: `cv_${user.enrollNo}.pdf`, // 👈 includes .pdf extension
+				overwrite: true,
+			});
+			
+			user.cvFile = uploadCv.secure_url;
+			console.log(user.cvFile)
+		}
+		
 		// Update other profile fields
 		user.fullName = fullName || user.fullName;
 		user.email = email || user.email;

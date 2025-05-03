@@ -8,7 +8,6 @@ const signup = async (req, res) => {
         email: z.string().min(3).max(100).email(),
         password: z.string().min(3).max(30),
         fullName: z.string().min(3).max(100),
-        confirmPassword: z.string().min(3).max(100),
         enrollNo: z.string().min(3).max(20)
     });
 
@@ -20,42 +19,42 @@ const signup = async (req, res) => {
         });
     }
 
-    const { email, password, fullName, confirmPassword, enrollNo } = req.body;
-
-    if (password !== confirmPassword) {
-        return res.status(400).json({ error: "Passwords do not match!" });
-    }
+    const { email, password, fullName, enrollNo } = req.body;
 
     try {
-        const existingEmail = await userModel.findOne({ email }); // ✅ check in userModel
+        const existingEmail = await userModel.findOne({ email });
 
         if (existingEmail) {
             return res.status(400).json({ error: "Email is already taken" });
         }
 
-        const existingNo = await userModel.findOne({enrollNo});
+        const existingNo = await userModel.findOne({ enrollNo });
 
         if (existingNo) {
-            return res.status(400).json({ error: "Enrollment Number is already in use"})
+            return res.status(400).json({ error: "Enrollment Number is already in use" });
         }
 
         const hashedPassword = await bcrypt.hash(password, 5);
+
+        const ipuRankLink = `http://ipuranklist.com/student/${enrollNo}`;
 
         const newUser = await userModel.create({
             email,
             password: hashedPassword,
             fullName,
-            enrollNo
+            enrollNo,
+            ipuRankLink
         });
 
-        generateTokenAndSetCookie(newUser._id, res); // ✅ use newUser
+        generateTokenAndSetCookie(newUser._id, res);
 
         return res.status(201).json({
             _id: newUser._id,
             fullName: newUser.fullName,
             email: newUser.email,
             enrollNo: newUser.enrollNo,
-            profileImg: newUser.profileImg
+            profileImg: newUser.profileImg,
+            ipuRankLink: newUser.ipuRankLink
         });
 
     } catch (e) {
@@ -65,6 +64,7 @@ const signup = async (req, res) => {
         });
     }
 };
+
 
 const login = async (req, res) => {
     try{

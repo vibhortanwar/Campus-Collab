@@ -16,15 +16,16 @@ import Post from "../../components/common/Post";
 
 const ProfilePage = () => {
 	const [profileImg, setProfileImg] = useState(null);
+	const [cvFile, setCvFile] = useState(null); // ✅ NEW
 	const [feedType, setFeedType] = useState("posts");
 
 	const profileImgRef = useRef(null);
-	const { enrollNo } = useParams(); // ✅ fixed typo
+	const cvInputRef = useRef(null); // ✅ NEW
+	const { enrollNo } = useParams();
 
 	const queryClient = useQueryClient();
-	const authUser = queryClient.getQueryData(["authUser"]); // ✅ access cached authUser
-
-	const isMyProfile = authUser?.enrollNo === enrollNo; // ✅ check if own profile
+	const authUser = queryClient.getQueryData(["authUser"]);
+	const isMyProfile = authUser?.enrollNo === enrollNo;
 
 	const { data: user, isLoading } = useQuery({
 		queryKey: ["userProfile", enrollNo],
@@ -42,44 +43,43 @@ const ProfilePage = () => {
 			}
 		},
 	});
+
 	const { mutate: updateProfile, isPending: isUpdatingProfile } = useMutation({
 		mutationFn: async () => {
-			try {
-				const res = await fetch(`/api/user/update`, {
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({
-						profileImg,
-						fullName: user.fullName, // ✅ Send fullName if required by backend
-					}),
-				});
-	
-				const data = await res.json();
-				if (!res.ok) {
-					throw new Error(data.error || "Something went wrong");
-				}
-				return data;
-			} catch (error) {
-				throw new Error(error.message);
+			const updatedData = {
+				fullName: user.fullName, // You could allow editing too
+				profileImg: profileImg || undefined,
+				cvFile: cvFile || undefined,
+			};
+		
+			const res = await fetch(`/api/user/update`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(updatedData),
+			});
+		
+			const data = await res.json();
+			if (!res.ok) {
+				throw new Error(data.error || "Something went wrong");
 			}
+			return data;
 		},
 		onSuccess: async () => {
 			toast.success("Profile updated successfully");
-	
-			setProfileImg(null); // ✅ Clear selected image
-	
+			setProfileImg(null);
+			setCvFile(null); // ✅ Clear CV
 			await Promise.all([
 				queryClient.invalidateQueries({ queryKey: ["authUser"] }),
-				queryClient.invalidateQueries({ queryKey: ["userProfile", enrollNo] }), // ✅ Invalidate the right user profile
+				queryClient.invalidateQueries({ queryKey: ["userProfile", enrollNo] }),
 			]);
 		},
 		onError: (error) => {
-			toast.error(error.message); // ✅ Show proper error message
+			toast.error(error.message);
 		},
 	});
-	
+
 	const handleImgChange = (e) => {
 		const file = e.target.files[0];
 		if (file) {
@@ -90,14 +90,15 @@ const ProfilePage = () => {
 			reader.readAsDataURL(file);
 		}
 	};
+
 	const handleProfileUpdate = () => {
-		if (profileImg) {
-			updateProfile();
-		} else {
-			toast.error("Please select an image first.");
+		if (!profileImg && !cvFile) {
+			toast.error("Please select something to update.");
+			return;
 		}
+		updateProfile();
 	};
-	
+
 	return (
 		<div className='flex-[4_4_0] border-r border-gray-700 min-h-screen'>
 			{isLoading && <ProfileHeaderSkeleton />}
@@ -140,12 +141,12 @@ const ProfilePage = () => {
 
 					<div className='flex justify-end px-4 mt-5'>
 						{isMyProfile && <EditProfileModal />}
-						{profileImg && (
+						{(profileImg || cvFile) && (
 							<button
 								className='btn btn-primary rounded-full btn-sm text-white px-4 ml-2'
 								onClick={handleProfileUpdate}
 							>
-								{isUpdatingProfile?"Updateing..." : "update"}
+								{isUpdatingProfile ? "Updating..." : "Update"}
 							</button>
 						)}
 					</div>
@@ -161,13 +162,68 @@ const ProfilePage = () => {
 								<IoCalendarOutline className='w-4 h-4 text-slate-500' />
 							</div>
 						</div>
-					</div>
+
+						{/* ✅ IPU Rank Link and CV Link */}
+						{user.ipuRankLink && (
+							<a
+								href={user.ipuRankLink}
+								target="_blank"
+								rel="noopener noreferrer"
+								className='text-blue-400 underline text-sm'
+							>
+								View IPU Rank
+							</a>
+						)}
+						{user.cvFile && (
+							<a
+								href={user.cvFile}
+								download={`cv_${user.enrollNo}.pdf`} // 👈 triggers browser download with filename
+								target="_blank"
+								rel="noopener noreferrer"
+								className='text-blue-400 underline text-sm'
+							>
+								View CV
+							</a>
+						)}
+
+						{/* ✅ Upload/Edit CV */}
+						{isMyProfile && (
+							<div className="flex items-center gap-2">
+								<input
+									type="file"
+									hidden
+									ref={cvInputRef}
+									accept="application/pdf"
+									onChange={(e) => {
+										const file = e.target.files[0];
+										if (file) {
+											const reader = new FileReader();
+											reader.onload = () => {
+												const result = reader.result;
+												if (result.startsWith("data:application/pdf")) {
+													setCvFile(result);
+												} else {
+													toast.error("Invalid file type. Only PDF is allowed.");
+												}
+											};
+											reader.readAsDataURL(file);
+										}
+									}}
+								/>
+								<button
+									className='btn btn-outline btn-sm'
+									onClick={() => cvInputRef.current.click()}
+								>
+									{user.cvFile ? "Edit CV" : "Add CV"}
+								</button>
+								{cvFile && <span className="text-xs text-green-400">✓ Ready to upload</span>}
+							</div>
+						)}
+											</div>
 
 					<div className='flex w-full border-b border-gray-700 mt-4'>
 						<div
-							className={`flex justify-center flex-1 p-3 ${
-								feedType === "posts" ? "text-white" : "text-slate-500"
-							} hover:bg-secondary transition duration-300 relative cursor-pointer`}
+							className={`flex justify-center flex-1 p-3 ${feedType === "posts" ? "text-white" : "text-slate-500"} hover:bg-secondary transition duration-300 relative cursor-pointer`}
 							onClick={() => setFeedType("posts")}
 						>
 							Posts
@@ -176,9 +232,7 @@ const ProfilePage = () => {
 							)}
 						</div>
 						<div
-							className={`flex justify-center flex-1 p-3 ${
-								feedType === "applications" ? "text-white" : "text-slate-500"
-							} hover:bg-secondary transition duration-300 relative cursor-pointer`}
+							className={`flex justify-center flex-1 p-3 ${feedType === "applications" ? "text-white" : "text-slate-500"} hover:bg-secondary transition duration-300 relative cursor-pointer`}
 							onClick={() => setFeedType("applications")}
 						>
 							Applications
@@ -188,7 +242,6 @@ const ProfilePage = () => {
 						</div>
 					</div>
 
-					{/* Render posts or applications based on tab */}
 					<Posts feedType={feedType} enrollNo={enrollNo} userId={user?._id} />
 				</>
 			)}
