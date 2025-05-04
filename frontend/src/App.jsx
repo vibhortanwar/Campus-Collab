@@ -44,7 +44,7 @@ function App() {
 
   return (
     <>
-      <div>
+      <div >
         {authUser && <Navbar />}
         <Routes>
           <Route path="/" element={authUser ? <HomePage /> : <StartPage />} />
