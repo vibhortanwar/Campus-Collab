@@ -1,8 +1,9 @@
+import { userModel } from "../models/user.js";
+import bcrypt from "bcrypt";
+import cloudinary from "cloudinary";
+import { notificationModel } from "../models/notification.js";
 
-const { userModel } = require("../models/user");
-const bcrypt = require("bcrypt");
-const cloudinary = require('cloudinary').v2;
-const { notificationModel } = "../models/notification";
+cloudinary.v2; // Ensure you're using the correct API if you're relying on cloudinary.v2
 
 
 const getUserProfile = async (req, res) => {
@@ -97,7 +98,4 @@ const updateUser = async (req, res) => {
     }
 };
 
-module.exports = {
-    getUserProfile:getUserProfile,
-    updateUser:updateUser
-}
+export {getUserProfile, updateUser}

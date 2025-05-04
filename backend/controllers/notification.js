@@ -1,4 +1,4 @@
-const { notificationModel } = require("../models/notification");
+import { notificationModel } from "../models/notification.js";
 
 const getNotifications = async (req, res) => {
     try{
@@ -51,8 +51,4 @@ const deleteOneNotification = async (req, res) => {
     }
 }
 
-module.exports={
-    getNotifications: getNotifications,
-    deleteNotifications: deleteNotifications, 
-    deleteOneNotification: deleteOneNotification
-}
+export { getNotifications, deleteNotifications, deleteOneNotification}

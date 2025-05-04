@@ -1,15 +1,17 @@
-const express = require("express");
-const dotenv = require("dotenv");
+import express from "express";
+import dotenv from "dotenv";
+import path from "path";
+import { authRouter } from "./routes/auth.js";
+import { userRouter } from "./routes/user.js";
+import cloudinary from "cloudinary";
+import { connectMongoDB } from "./db/db.js";
+import cookieParser from "cookie-parser";
+import { postRouter } from "./routes/post.js";
+import { notificationRouter } from "./routes/notification.js";
 
-const { authRouter } = require("./routes/auth");
-const { userRouter } = require("./routes/user");
-const cloudinary = require("cloudinary").v2;
-const { connectMongoDB } = require("./db/db");
-const cookieParser = require("cookie-parser");
 const app = express();
-const { postRouter } = require("./routes/post")
-const { notificationRouter } = require("./routes/notification.js");
 
+cloudinary.v2; 
 dotenv.config();
 
 cloudinary.config({
@@ -24,11 +26,20 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit:'50mb', extended: true }));
 app.use(cookieParser());
 
+const __dirname = path.resolve();
 
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
 app.use("/api/posts", postRouter);
 app.use("/api/notifications", notificationRouter);
+
+if(process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "/frontend/dist")));
+
+  app.get("*", (req,res) => {
+    res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
+  })
+}
 
 async function main() {
   await connectMongoDB();

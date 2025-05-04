@@ -1,7 +1,8 @@
-const { Router } = require("express");
-const { signup, login, logout, getMe } = require("../controllers/auth");
-const authRouter=Router();
-const { protectRoute } = require("../middleware/protectRoute");
+import { Router } from "express";
+import { signup, login, logout, getMe } from "../controllers/auth.js";
+import { protectRoute } from "../middleware/protectRoute.js";
+
+const authRouter = Router();
 
 authRouter.get("/me", protectRoute, getMe);
 
@@ -12,6 +13,4 @@ authRouter.post("/login", login);
 authRouter.post("/logout", logout);
 
 
-module.exports={
-    authRouter: authRouter
-}
+export {authRouter}

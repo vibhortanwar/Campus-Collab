@@ -1,7 +1,7 @@
-const { userModel } = require("../models/user")
-const bcrypt = require("bcrypt");
-const { z } = require("zod");
-const { generateTokenAndSetCookie } = require("../lib/utils/generateToken")
+import { userModel } from "../models/user.js";
+import bcrypt from "bcrypt";
+import { z } from "zod";
+import { generateTokenAndSetCookie } from "../lib/utils/generateToken.js";
 
 const signup = async (req, res) => {
     const requiredBody = z.object({
@@ -122,9 +122,4 @@ const getMe = async(req,res) => {
         res.status(500).json({ error: "Internal Server Error" })
     }
 }
-module.exports = {
-    signup: signup,
-    login: login,
-    logout: logout,
-    getMe: getMe
-}
+export { signup, login, logout, getMe };

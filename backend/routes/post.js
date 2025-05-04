@@ -1,6 +1,14 @@
-const { Router } = require("express");
-const { protectRoute } = require("../middleware/protectRoute");
-const { getAllPosts, getAppliedPosts, getUserPosts, createPost, deletePost, applyConcilePost, getApplicantsForPost } = require("../controllers/post")
+import { Router } from "express";
+import { protectRoute } from "../middleware/protectRoute.js";
+import {
+  getAllPosts,
+  getAppliedPosts,
+  getUserPosts,
+  createPost,
+  deletePost,
+  applyConcilePost,
+  getApplicantsForPost
+} from "../controllers/post.js";
 const postRouter = Router();
 
 postRouter.get("/all", protectRoute, getAllPosts);
@@ -11,6 +19,4 @@ postRouter.delete("/:id", protectRoute, deletePost);
 postRouter.post("/applications/:id",protectRoute,applyConcilePost);
 postRouter.get("/applications/:postId", protectRoute, getApplicantsForPost);
 
-module.exports = {
-    postRouter: postRouter
-}
+export {postRouter}

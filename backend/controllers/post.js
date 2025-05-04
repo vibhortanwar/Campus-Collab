@@ -1,8 +1,10 @@
-const post = require("../models/post");
-const { postModel } = require("../models/post");
-const { userModel } = require("../models/user");
-const cloudinary = require("cloudinary").v2;
-const { notificationModel } = require("../models/notification")
+import * as post from "../models/post.js";
+import { postModel } from "../models/post.js";
+import { userModel } from "../models/user.js";
+import cloudinary from "cloudinary";
+import { notificationModel } from "../models/notification.js";
+
+cloudinary.v2;
 const createPost = async (req, res) => {
     try {
         const { text, img, expiresAt } = req.body; // accept expiresAt
@@ -243,12 +245,4 @@ const getApplicantsForPost = async (req, res) => {
     }
   };
 
-module.exports = {
-    createPost: createPost,
-    deletePost: deletePost,
-    applyConcilePost: applyConcilePost,
-    getAllPosts: getAllPosts,
-    getAppliedPosts: getAppliedPosts,
-    getUserPosts: getUserPosts,
-    getApplicantsForPost: getApplicantsForPost
-}  
+export {createPost, deletePost, applyConcilePost, getAllPosts, getAppliedPosts, getUserPosts, getApplicantsForPost}  
