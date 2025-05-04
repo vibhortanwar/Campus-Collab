@@ -91,6 +91,7 @@ const Post = ({ post }) => {
       toast.error(err.message);
     }
   });
+  const hasExpired = post.expiresAt && new Date(post.expiresAt) <= new Date();
 
   const handleDeletePost = () => deletePost();
 
@@ -159,16 +160,26 @@ const Post = ({ post }) => {
       <div className="flex items-center gap-3">
         <button
           onClick={handleApplyPost}
-          disabled={isMyPost || isApplying}
+          disabled={isMyPost || isApplying || hasExpired}
           className="btn btn-sm btn-outline"
         >
-          {isApplying ? "Processing..." : isApplied ? "Concile" : "Apply"}
+          {hasExpired
+            ? "Closed"
+            : isApplying
+            ? "Processing..."
+            : isApplied
+            ? "Withdraw"
+            : "Apply"}
         </button>
         <span className="text-sm text-gray-600">
           Total applications: {post.applications.length}
         </span>
       </div>
-
+      {post.expiresAt && (
+        <p className="text-sm text-red-500 mt-2">
+          Deadline: {new Date(post.expiresAt).toLocaleString()}
+        </p>
+      )}
       {isMyPost && (
         <>
           <button

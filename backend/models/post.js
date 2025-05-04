@@ -29,8 +29,6 @@ const postSchema = new mongoose.Schema({
     }
 },{timestamps: true})
 
-postSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-
 const postModel = mongoose.model("Post",postSchema);
 
 module.exports = {

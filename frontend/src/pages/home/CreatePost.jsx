@@ -50,10 +50,18 @@ const CreatePost = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
     if (!text.trim() && !img) {
       toast.error("Cannot create an empty post.");
       return;
     }
+
+    // Check if deadline has already passed
+    if (expiresAt && new Date(expiresAt) <= new Date()) {
+      toast.error("Deadline has already passed.");
+      return;
+    }
+
     createPost({ text, img, expiresAt });
   };
 
@@ -66,14 +74,16 @@ const CreatePost = () => {
     }
   };
 
+  const isExpired = expiresAt && new Date(expiresAt) <= new Date();
+
   return (
     <div className="p-4 bg-gray-900 rounded-lg shadow-lg max-w-xl mx-auto text-white">
       <div className="flex items-center mb-4">
-          <img
-            src={authUser.profileImg || profile}
-            alt="User"
-            className="w-10 h-10 rounded-full object-cover mr-3"
-          />
+        <img
+          src={authUser?.profileImg || profile}
+          alt="User"
+          className="w-10 h-10 rounded-full object-cover mr-3"
+        />
         <span className="font-medium">{authUser?.fullName || "User"}</span>
       </div>
 
@@ -136,7 +146,7 @@ const CreatePost = () => {
           )}
         </div>
 
-        {showDeadlineInput || expiresAt ? (
+        {(showDeadlineInput || expiresAt) && (
           <label className="flex flex-col gap-1 text-sm text-gray-300">
             Deadline:
             <input
@@ -145,15 +155,22 @@ const CreatePost = () => {
               onChange={(e) => setExpiresAt(e.target.value)}
               className="p-2 rounded bg-gray-800 border border-gray-700 text-white"
             />
+            {isExpired && (
+              <span className="text-red-400 text-xs mt-1">
+                Deadline has already passed.
+              </span>
+            )}
           </label>
-        ) : null}
+        )}
 
         <button
           type="submit"
-          disabled={isPending}
-          className="btn btn-primary bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6 py-2 mt-2"
+          disabled={isPending || isExpired}
+          className={`btn btn-primary rounded-full px-6 py-2 mt-2 text-white ${
+            isPending || isExpired ? "bg-gray-600 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+          }`}
         >
-          {isPending ? "Posting..." : "Post"}
+          {isPending ? "Posting..." : isExpired ? "Deadline Passed" : "Post"}
         </button>
 
         {isError && <div className="text-red-400 text-sm">Something went wrong.</div>}

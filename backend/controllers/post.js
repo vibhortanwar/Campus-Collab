@@ -5,8 +5,9 @@ const cloudinary = require("cloudinary").v2;
 const { notificationModel } = require("../models/notification")
 const createPost = async (req, res) => {
     try {
-      const { text, img, date, time } = req.body;
-      const userId = req.user._id;
+        const { text, img, expiresAt } = req.body; // accept expiresAt
+        const userId = req.user._id;
+      let expiresAtUTC = null;
   
       if (!text && !img) {
         return res.status(400).json({ error: "Post must have text or image" });
@@ -23,27 +24,22 @@ const createPost = async (req, res) => {
         imageUrl = uploadedResponse.secure_url;
         imagePublicId = uploadedResponse.public_id;
       }
-  
-      // ✅ Convert IST date & time to UTC
-      let expiresAt = null;
-      if (date && time) {
-        const [year, month, day] = date.split("-").map(Number);
-        const [hours, minutes] = time.split(":").map(Number);
-  
-        // Convert IST (UTC+5:30) to UTC
-        const istDate = new Date(Date.UTC(year, month - 1, day, hours - 5, minutes - 30));
-        expiresAt = istDate;
+      if (expiresAt) {
+        const localDate = new Date(expiresAt); // from frontend in IST
+        if (!isNaN(localDate)) {
+          expiresAtUTC = new Date(localDate.toISOString()); // stores in UTC
+        }
       }
-  
-      // ✅ Create the post
-      const newPost = new postModel({
-        user: userId,
-        text,
-        img: imageUrl,
-        imagePublicId, // <== store this for later deletion
-        expiresAt,
-      });
-  
+      // ✅ Create the post (without expiresAt)
+ 
+        const newPost = new postModel({
+            user: userId,
+            text,
+            img: imageUrl,
+            imagePublicId,
+            expiresAt: expiresAtUTC,
+        });
+    
       await newPost.save();
       res.status(201).json(newPost);
     } catch (error) {
@@ -51,6 +47,7 @@ const createPost = async (req, res) => {
       res.status(500).json({ error: "Internal Server Error" });
     }
   };
+  
 
 const deletePost = async (req, res) => {
     try {
@@ -83,6 +80,11 @@ const applyConcilePost = async (req, res) => {
         const post = await postModel.findById(postId);
         if (!post) return res.status(404).json({ error: "Post not found" });
 
+        // ✅ Prevent applying after deadline
+        if (post.expiresAt && new Date(post.expiresAt) <= new Date()) {
+            return res.status(403).json({ error: "Deadline has passed. Cannot apply." });
+        }
+
         const hasApplied = post.applications.includes(userId);
 
         if (hasApplied) {
@@ -92,7 +94,6 @@ const applyConcilePost = async (req, res) => {
                 { $pull: { applications: userId } }
             );
 
-            // ✅ Remove post from user's appliedPosts
             await userModel.updateOne(
                 { _id: userId },
                 { $pull: { appliedPosts: postId } }
@@ -104,14 +105,12 @@ const applyConcilePost = async (req, res) => {
             const applicationCount = updatedPost.applications.length;
 
             if (applicationCount === 0) {
-                // Delete notification if no one has applied
                 await notificationModel.deleteOne({
                     to: post.user,
                     type: "applied",
                     post: postId
                 });
             } else {
-                // Update application count in notification
                 await notificationModel.updateOne(
                     { to: post.user, type: "applied", post: postId },
                     { $set: { count: applicationCount } }
@@ -125,10 +124,9 @@ const applyConcilePost = async (req, res) => {
             post.applications.push(userId);
             await post.save();
 
-            // ✅ Add post to user's appliedPosts
             await userModel.updateOne(
                 { _id: userId },
-                { $addToSet: { appliedPosts: postId } } // addToSet prevents duplicates
+                { $addToSet: { appliedPosts: postId } }
             );
 
             const applicationCount = post.applications.length;
@@ -160,7 +158,6 @@ const applyConcilePost = async (req, res) => {
         return res.status(500).json({ error: "Internal server error" });
     }
 };
-
 
 const getAllPosts = async (req, res) => {
     try{
