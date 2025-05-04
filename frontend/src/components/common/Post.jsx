@@ -5,31 +5,60 @@ import { Link } from 'react-router-dom';
 import LoadingSpinner from './LoadingSpinner';
 import { formatPostDate } from "../../utils/date";
 import profile from "../../assets/Profile.jpg";
+import { MdDelete } from "react-icons/md";
+
 const ViewApplicantsModal = ({ applicants, isOpen, closeModal }) => {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredApplicants = applicants?.filter((applicant) => {
+    const q = searchQuery.toLowerCase();
+    return (
+      applicant.fullName.toLowerCase().includes(q) ||
+      applicant.enrollNo.toLowerCase().includes(q)
+    );
+  });
+
   return (
     <dialog open={isOpen} className="modal">
-      <div className="modal-box">
-        <h3 className="font-bold text-lg mb-4">Applicants</h3>
-        <div className="space-y-2">
-          {applicants?.length > 0 ? (
-            applicants.map((applicant) => (
+      <div className="modal-box max-w-lg">
+        <h3 className="font-bold text-lg mb-4 text-white">Applicants</h3>
+
+        <input
+          type="text"
+          placeholder="Search by name or enroll no..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="input input-bordered w-full mb-4"
+        />
+
+        <div className="space-y-3 max-h-60 overflow-y-auto">
+          {filteredApplicants?.length > 0 ? (
+            filteredApplicants.map((applicant) => (
               <a
                 key={applicant._id}
                 href={`/profile/${applicant.enrollNo}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex justify-between items-center border-b py-1 hover:bg-gray-100 px-2 rounded"
+                className="flex justify-between items-center border border-[#d1d5db] shadow-sm rounded-md px-4 py-2 hover:bg-[#f5faff] transition duration-200"
               >
-                <span className="text-blue-600 hover:underline">{applicant.fullName}</span>
-                <span className="text-sm text-gray-500">@{applicant.enrollNo}</span>
+                <div className="flex flex-col">
+                  <span className="font-semibold text-white hover:underline">
+                    {applicant.fullName}
+                  </span>
+                  <span className="text-sm text-gray-500">@{applicant.enrollNo}</span>
+                </div>
+                <span className="text-xs text-gray-400">View Profile ↗</span>
               </a>
             ))
           ) : (
-            <p className="text-center">No applicants yet</p>
+            <p className="text-center text-gray-600">No matching applicants</p>
           )}
         </div>
+
         <div className="modal-action">
-          <button className="btn" onClick={closeModal}>Close</button>
+          <button className="btn bg-white text-[#123458] hover:bg-gray-800 hover:text-white" onClick={closeModal}>
+            Close
+          </button>
         </div>
       </div>
     </dialog>
@@ -118,7 +147,7 @@ const Post = ({ post }) => {
   if (isAuthLoading || !authUser) return <LoadingSpinner />;
 
   return (
-    <div className="border border-gray-300 rounded-md p-4 mb-6 shadow-sm">
+    <div className="border border-[#123458] rounded-md p-4 mb-6 shadow-sm">
       <div className="flex items-center mb-3 gap-3">
         <Link to={`/profile/${postOwner.enrollNo}`}>
           <img
@@ -130,7 +159,7 @@ const Post = ({ post }) => {
         <div className="flex flex-col">
           <Link
             to={`/profile/${postOwner.enrollNo}`}
-            className="font-medium text-gray-800"
+            className="font-medium text-[#123458] font-bold"
           >
             {postOwner.fullName}
           </Link>
@@ -138,45 +167,60 @@ const Post = ({ post }) => {
         </div>
         {isMyPost && (
           <button
-            onClick={handleDeletePost}
-            className="ml-auto text-sm text-red-500 hover:underline"
-          >
-            {isDeleting ? "Deleting..." : "Delete"}
-          </button>
+          onClick={handleDeletePost}
+          className="ml-auto p-2 rounded-full hover:bg-white transition-colors text-[#123458]"
+          title="Delete Post"
+        >
+          {isDeleting ? (
+            <span className="text-sm">Deleting...</span>
+          ) : (
+            <MdDelete className="w-5 h-5" />
+          )}
+        </button>
+        
         )}
       </div>
 
       <div className="mb-4">
-        <p className="mb-2 text-gray-800">{post.text}</p>
+        <p className="mb-2 text-[#123458]">{post.text}</p>
         {post.img && (
           <img
             src={post.img}
             alt="post"
-            className="w-full rounded-md max-h-[300px] object-cover"
+            className="max-w-full max-h-[400px] w-auto h-auto rounded-md object-contain mx-auto"
           />
         )}
       </div>
 
       <div className="flex items-center gap-3">
-        <button
-          onClick={handleApplyPost}
-          disabled={isMyPost || isApplying || hasExpired}
-          className="btn btn-sm btn-outline"
-        >
-          {hasExpired
-            ? "Closed"
-            : isApplying
-            ? "Processing..."
+      {!isMyPost && <button
+        onClick={handleApplyPost}
+        disabled={isMyPost || isApplying || hasExpired}
+        className={`px-4 py-1.5 text-sm rounded-md transition-colors duration-200 font-medium
+          ${hasExpired
+            ? "bg-gray-300 text-gray-600 cursor-not-allowed"
             : isApplied
-            ? "Withdraw"
-            : "Apply"}
-        </button>
+            ? "border border-red text-red-600 hover:bg-red-600 hover:text-white"
+            : "bg-[#123458] text-white hover:bg-[#0f2d4d]"
+          }
+          ${isApplying ? "opacity-50 cursor-not-allowed" : ""}
+        `}
+      >
+        {hasExpired
+          ? "Closed"
+          : isApplying
+          ? "Processing..."
+          : isApplied
+          ? "Withdraw"
+          : "Apply"}
+      </button>}
+
         <span className="text-sm text-gray-600">
           Total applications: {post.applications.length}
         </span>
       </div>
-      {post.expiresAt && (
-        <p className="text-sm text-red-500 mt-2">
+      {post.expiresAt && !hasExpired && (
+        <p className="text-sm text-[#123458] mt-2">
           Deadline: {new Date(post.expiresAt).toLocaleString()}
         </p>
       )}
@@ -185,10 +229,16 @@ const Post = ({ post }) => {
           <button
             onClick={handleViewApplicantsClick}
             disabled={isFetchingApplicants}
-            className="btn btn-sm mt-3"
+            className={`mt-3 px-4 py-1.5 text-sm rounded-md transition-colors duration-200 font-medium border
+              ${isFetchingApplicants
+                ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                : "bg-white border-[#123458] text-[#123458] hover:bg-[#123458] hover:text-white"
+              }
+            `}
           >
             {isFetchingApplicants ? "Loading..." : "View Applicants"}
           </button>
+
 
           <ViewApplicantsModal
             applicants={applicants}

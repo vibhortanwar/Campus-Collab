@@ -50,18 +50,10 @@ const CreatePost = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
     if (!text.trim() && !img) {
       toast.error("Cannot create an empty post.");
       return;
     }
-
-    // Check if deadline has already passed
-    if (expiresAt && new Date(expiresAt) <= new Date()) {
-      toast.error("Deadline has already passed.");
-      return;
-    }
-
     createPost({ text, img, expiresAt });
   };
 
@@ -74,16 +66,14 @@ const CreatePost = () => {
     }
   };
 
-  const isExpired = expiresAt && new Date(expiresAt) <= new Date();
-
   return (
-    <div className="p-4 bg-gray-900 rounded-lg shadow-lg max-w-xl mx-auto text-white">
+    <div className="p-4 rounded-lg shadow-lg max-w-xl mx-auto text-[#123458] border border-[#123458]">
       <div className="flex items-center mb-4">
-        <img
-          src={authUser?.profileImg || profile}
-          alt="User"
-          className="w-10 h-10 rounded-full object-cover mr-3"
-        />
+          <img
+            src={authUser.profileImg || profile}
+            alt="User"
+            className="w-10 h-10 rounded-full object-cover mr-3"
+          />
         <span className="font-medium">{authUser?.fullName || "User"}</span>
       </div>
 
@@ -92,7 +82,7 @@ const CreatePost = () => {
           placeholder='What is happening?!'
           value={text}
           onChange={(e) => setText(e.target.value)}
-          className="p-3 rounded-md bg-gray-800 border border-gray-700 focus:outline-none resize-none"
+          className="p-3 rounded-md border border-gray-700 focus:outline-none resize-none"
           rows={4}
         />
 
@@ -106,7 +96,7 @@ const CreatePost = () => {
               }}
               className="absolute top-1 right-1 bg-black bg-opacity-60 rounded-full p-1 hover:bg-opacity-80"
             >
-              <IoCloseSharp className="text-white w-5 h-5" />
+              <IoCloseSharp className="text-[#123458] w-5 h-5" />
             </button>
             <img
               src={img}
@@ -121,7 +111,7 @@ const CreatePost = () => {
             <button
               type="button"
               onClick={() => imgRef.current && imgRef.current.click()}
-              className="flex items-center gap-1 text-sm text-blue-400 hover:underline"
+              className="flex items-center gap-1 text-sm text-[#123458] hover:underline"
             >
               <MdOutlineImage className="w-5 h-5" />
               Add Image
@@ -139,38 +129,31 @@ const CreatePost = () => {
             <button
               type="button"
               onClick={() => setShowDeadlineInput(true)}
-              className="text-sm text-gray-400 hover:text-white"
+              className="text-sm text-gray-400 hover:text-[#123458]"
             >
               Add Deadline
             </button>
           )}
         </div>
 
-        {(showDeadlineInput || expiresAt) && (
-          <label className="flex flex-col gap-1 text-sm text-gray-300">
+        {showDeadlineInput || expiresAt ? (
+          <label className="flex flex-col gap-1 text-sm text-[#123458]">
             Deadline:
             <input
               type="datetime-local"
               value={expiresAt}
               onChange={(e) => setExpiresAt(e.target.value)}
-              className="p-2 rounded bg-gray-800 border border-gray-700 text-white"
+              className="p-2 rounded border border-gray-700 text-[#123458]"
             />
-            {isExpired && (
-              <span className="text-red-400 text-xs mt-1">
-                Deadline has already passed.
-              </span>
-            )}
           </label>
-        )}
+        ) : null}
 
         <button
           type="submit"
-          disabled={isPending || isExpired}
-          className={`btn btn-primary rounded-full px-6 py-2 mt-2 text-white ${
-            isPending || isExpired ? "bg-gray-600 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
-          }`}
+          disabled={isPending}
+          className="btn text-[#123458] bg-white border-none hover:bg-[#123458] hover:text-white transition-colors duration-200 rounded-full px-6 py-2 mt-2"
         >
-          {isPending ? "Posting..." : isExpired ? "Deadline Passed" : "Post"}
+          {isPending ? "Posting..." : "Post"}
         </button>
 
         {isError && <div className="text-red-400 text-sm">Something went wrong.</div>}

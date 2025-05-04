@@ -56,9 +56,9 @@ const NotificationPage = () => {
 	});
 
 	return (
-		<div>
-			<div className='flex justify-between p-4 items-center'>
-				<p className='text-lg font-bold'>Notifications</p>
+		<div className='w-1/2 mx-auto p-4'>
+			<div className='flex justify-between items-center'>
+				<p className='text-lg font-bold text-gray-800'>Notifications</p>
 				<div className='dropdown'>
 					<div tabIndex={0} role='button'>
 						<IoSettingsOutline className='w-5 h-5' />
@@ -74,50 +74,43 @@ const NotificationPage = () => {
 			</div>
 
 			{isLoading ? (
-				<div className='flex justify-center h-full items-center'>
+				<div className='flex justify-center items-center'>
 					<LoadingSpinner size='lg' />
 				</div>
 			) : notifications.length === 0 ? (
-				<div className='text-center p-4 font-bold'>No notifications 🤔</div>
+				<div className='text-center p-4 font-bold text-gray-500'>
+					No notifications 🤔
+				</div>
 			) : (
 				notifications.map((notification) => (
-					<div className='border-b border-gray-700' key={notification._id}>
+					<div className='border-b border-gray-300' key={notification._id}>
 						<div className='flex items-center gap-3 p-4'>
-							<FaCheckCircle className='w-6 h-6 text-green-500' />
+							<FaCheckCircle className='w-5 h-5 text-green-500' />
 
-							<Link to={`/profile/${notification.from._id}`}>
-								<div className='avatar'>
-									<div className='w-9 rounded-full'>
-										<img
-											src={
-												notification.from.profileImg || "/avatar-placeholder.png"
-											}
-										/>
-									</div>
-								</div>
-							</Link>
+							{/* Profile Image - Circular with no background */}
+							<div className='shrink-0'>
+								<img
+									src={notification.from.profileImg || "/avatar-placeholder.png"}
+									alt='profile'
+									className='w-9 h-9 rounded-full object-cover'
+								/>
+							</div>
 
-							<div className='text-sm flex-1'>
-								<Link
-									className='font-bold'
-									to={`/profile/${notification.from._id}`}
-								>
+							<div className='text-sm flex-1 text-gray-800'>
+								<div className='font-bold text-blue-600'>
 									{notification.from.fullName}
-								</Link>{" "}
+								</div>{" "}
 								applied for your post{" "}
-								<Link
+								<div
 									className='font-medium text-blue-400'
-									to={`/post/${notification.post._id}`}
 								>
 									{notification.post.title}
-								</Link>{" "}
-								({notification.count})
+								</div>{" "}
+								<span className='text-sm text-gray-600'>({notification.count})</span>
 							</div>
 
 							<button
-								onClick={() =>
-									deleteOneNotification.mutate(notification._id)
-								}
+								onClick={() => deleteOneNotification.mutate(notification._id)}
 								className='text-red-500 hover:text-red-700'
 							>
 								<MdDelete className='w-5 h-5' />

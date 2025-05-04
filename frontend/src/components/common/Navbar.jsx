@@ -1,47 +1,77 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import React from "react";
-import toast from "react-hot-toast";
-import { Link, useNavigate } from "react-router-dom";
-import profile from "../../assets/Profile.jpg"
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import profile from "../../assets/Profile.jpg";
+import Logo from "../../assets/Logo.png";
 
 const Navbar = () => {
-	const queryClient = useQueryClient();
-	const navigate = useNavigate();
+  const { data: authUser } = useQuery({
+    queryKey: ["authUser"],
+    queryFn: async () => {
+      const res = await fetch("/api/auth/me");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Something went wrong");
+      return data;
+    },
+  });
 
-	const { data: authUser } = useQuery({
-		queryKey: ["authUser"],
-		queryFn: async () => {
-			const res = await fetch("/api/auth/me");
-			const data = await res.json();
-			if (!res.ok) throw new Error(data.error || "Something went wrong");
-			return data;
-		},
-	});
+  return (
+    <div className="bg-[#123458] text-white px-6 py-3 shadow-md">
+      <div className="w-full flex items-center justify-between">
+        
+        {/* Left: Logo and Nav */}
+        <div className="flex items-center gap-8">
+          <Link to="/" className="flex items-center">
+            <img
+              src={Logo}
+              alt="Logo"
+              className="h-14 w-auto rounded-full object-contain shadow-md bg-white p-1"
+            />
+          </Link>
 
-	return (
-		<div className="flex justify-between items-center p-4 border-b border-gray-700 bg-black text-white">
-			<div className="flex gap-6 items-center">
-				<Link to="/" className="hover:underline">Home</Link>
-				<Link to="/notifications" className="hover:underline">Notifications</Link>
-			</div>
+          <nav className="flex gap-4 text-lg font-semibold tracking-wide">
+            <Link
+              to="/"
+              className="hover:bg-[#123458] hover:text-white hover:underline px-3 py-1 rounded-full transition"
+            >
+              Home
+            </Link>
+            <Link
+              to="/notifications"
+              className="hover:bg-[#123458] hover:text-white hover:underline px-3 py-1 rounded-full transition"
+            >
+              Notifications
+            </Link>
+            <Link
+              to="/about"
+              className="hover:bg-[#123458] hover:text-white hover:underline px-3 py-1 rounded-full transition"
+            >
+              About
+            </Link>
+          </nav>
+        </div>
 
-			{authUser && (
-				<div className="flex items-center gap-4">
-					<Link to={`/profile/${authUser.enrollNo}`}>
-						<img
-							src={authUser.profileImg || profile}
-							className="h-8 w-8 rounded-full object-cover"
-							alt="Profile"
-						/>
-					</Link>
-					<div className="text-sm leading-tight">
-						<p className="font-semibold">{authUser.fullName}</p>
-						<p className="text-gray-400">{authUser.enrollNo}</p>
-					</div>
-				</div>
-			)}
-		</div>
-	);
+        {/* Right: Profile Info */}
+        {authUser && (
+          <div className="flex items-center gap-4">
+            <Link
+              to={`/profile/${authUser.enrollNo}`}
+              className="flex items-center gap-2 hover:bg-[#638db9b6] transition rounded-full p-3"
+            >
+              <img
+                src={authUser.profileImg || profile}
+                alt="Profile"
+                className="h-10 w-10 rounded-full object-cover border border-gray-600 shadow-sm"
+              />
+              <div className="text-sm leading-tight text-left">
+                <p className="font-semibold">{authUser.fullName}</p>
+                <p className="text-white text-xs">{authUser.enrollNo}</p>
+              </div>
+            </Link>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default Navbar;

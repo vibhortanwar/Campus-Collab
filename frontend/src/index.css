@@ -1,2 +1,15 @@
 @import "tailwindcss";
 @plugin "daisyui";
+
+/* In your global CSS (index.css) */
+html,
+body {
+  height: 100%; /* Ensure full screen height */
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden; /* Prevent horizontal overflow */
+}
+
+body {
+  background-image: url("./assets/background.png");
+}

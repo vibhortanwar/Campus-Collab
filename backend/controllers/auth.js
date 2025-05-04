@@ -6,16 +6,19 @@ const { generateTokenAndSetCookie } = require("../lib/utils/generateToken")
 const signup = async (req, res) => {
     const requiredBody = z.object({
         email: z.string().email().regex(/^[a-zA-Z0-9._%+-]+@ipu\.ac\.in$/, "Must be an @ipu.ac.in email"),
-        password: z.string().min(8, {message : "Password must be atleast 8 characters long"}).max(30, {message: "Password must be atmost 30 characters"}),
+        password: z.string().min(8, { message: "Password must be at least 8 characters long" }).max(30, { message: "Password must be at most 30 characters" }),
         fullName: z.string(),
-        enrollNo: z.string().min(11, {message : "Enter valid Enrollment No."}).max(11, {message : "Enter valid Enrollment No."}),
+        enrollNo: z.string().min(11, { message: "Enter valid Enrollment No." }).max(11, { message: "Enter valid Enrollment No." }),
     });
 
     const parsedDataWithSuccess = requiredBody.safeParse(req.body);
     if (!parsedDataWithSuccess.success) {
+        // Map through the issues and extract only the message
+        const errorMessages = parsedDataWithSuccess.error.issues.map(issue => issue.message);
+
         return res.status(400).json({
-            message: "Incorrect format",
-            error: parsedDataWithSuccess.error
+            message: "Validation failed",
+            errors: errorMessages // Only messages are returned
         });
     }
 
@@ -31,7 +34,10 @@ const signup = async (req, res) => {
         const existingNo = await userModel.findOne({ enrollNo });
 
         if (existingNo) {
-            return res.status(400).json({ error: "Enrollment Number is already in use" });
+            return res.status(400).json({
+                message: "Validation failed",
+                error: "Enrollment Number is already in use"
+            });
         }
 
         const hashedPassword = await bcrypt.hash(password, 5);

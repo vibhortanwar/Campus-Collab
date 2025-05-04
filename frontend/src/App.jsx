@@ -8,6 +8,10 @@ import ProfilePage from "./pages/profile/ProfilePage";
 import { Toaster } from "react-hot-toast";
 import { useQuery } from "@tanstack/react-query";
 import LoadingSpinner from "./components/common/LoadingSpinner";
+import StartPage from "./pages/extras/StartPage";
+import ErrorPage from "./pages/extras/ErrorPage";
+import AboutPage from "./pages/about/About";
+import Footer from "./components/common/Footer";
 
 function App() {
   const { data: authUser, isLoading, error, isError } = useQuery({
@@ -43,12 +47,15 @@ function App() {
       <div>
         {authUser && <Navbar />}
         <Routes>
-          <Route path="/" element={authUser ? <HomePage /> : <Navigate to="/login" />} />
+          <Route path="/" element={authUser ? <HomePage /> : <StartPage />} />
+          <Route path="/about" element={<AboutPage />} />
           <Route path="/signup" element={!authUser ? <SignUpPage /> : <Navigate to="/" />} />
           <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
           <Route path="/notifications" element={authUser ? <NotificationPage /> : <Navigate to="/login" />} />
           <Route path="/profile/:enrollNo" element={authUser ? <ProfilePage /> : <Navigate to="/login" />} />
+          <Route path="*" element={<ErrorPage />} />
         </Routes>
+        <Footer/>
         <Toaster />
       </div>
     </>

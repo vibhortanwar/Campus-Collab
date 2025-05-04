@@ -32,7 +32,7 @@ const Posts = ({ feedType, enrollNo, userId }) => {
 	}, [feedType, enrollNo, userId]);
   
 	return (
-	  <>
+	  <div className="">
 		{isLoading && (
 		  <>
 			<PostSkeleton />
@@ -44,7 +44,7 @@ const Posts = ({ feedType, enrollNo, userId }) => {
 		{!isLoading && posts && posts.map((post) => (
 		  <Post key={post._id} post={post} />
 		))}
-	  </>
+	  </div>
 	);
   };
   
