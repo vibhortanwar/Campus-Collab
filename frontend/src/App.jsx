@@ -12,10 +12,11 @@ import StartPage from "./pages/extras/StartPage";
 import ErrorPage from "./pages/extras/ErrorPage";
 import AboutPage from "./pages/about/About";
 import Footer from "./components/common/Footer";
+import "./App.css"; // Import CSS file for styles
 
 function App() {
   const { data: authUser, isLoading, error, isError } = useQuery({
-    queryKey: ['authUser'],
+    queryKey: ["authUser"],
     queryFn: async () => {
       try {
         const res = await fetch("/api/auth/me", {
@@ -37,28 +38,43 @@ function App() {
   if (isLoading) {
     return (
       <div>
-        <LoadingSpinner size='lg' />
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
 
   return (
-    <>
-      <div >
-        {authUser && <Navbar />}
+    <div className="app-container">
+      {authUser && <Navbar />}
+      <div className="content">
         <Routes>
-          <Route path="/" element={authUser ? <HomePage /> : <StartPage />} />
+          <Route
+            path="/"
+            element={authUser ? <HomePage /> : <StartPage />}
+          />
           <Route path="/about" element={<AboutPage />} />
-          <Route path="/signup" element={!authUser ? <SignUpPage /> : <Navigate to="/" />} />
-          <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
-          <Route path="/notifications" element={authUser ? <NotificationPage /> : <Navigate to="/login" />} />
-          <Route path="/profile/:enrollNo" element={authUser ? <ProfilePage /> : <Navigate to="/login" />} />
+          <Route
+            path="/signup"
+            element={!authUser ? <SignUpPage /> : <Navigate to="/" />}
+          />
+          <Route
+            path="/login"
+            element={!authUser ? <LoginPage /> : <Navigate to="/" />}
+          />
+          <Route
+            path="/notifications"
+            element={authUser ? <NotificationPage /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/profile/:enrollNo"
+            element={authUser ? <ProfilePage /> : <Navigate to="/login" />}
+          />
           <Route path="*" element={<ErrorPage />} />
         </Routes>
-        <Footer/>
-        <Toaster />
       </div>
-    </>
+      <Footer />
+      <Toaster />
+    </div>
   );
 }
 

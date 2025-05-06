@@ -32,7 +32,7 @@ const Posts = ({ feedType, enrollNo, userId }) => {
 	}, [feedType, enrollNo, userId]);
   
 	return (
-	  <div className="">
+	  <div className="text-[#123458]">
 		{isLoading && (
 		  <>
 			<PostSkeleton />
@@ -40,7 +40,9 @@ const Posts = ({ feedType, enrollNo, userId }) => {
 			<PostSkeleton />
 		  </>
 		)}
-		{!isLoading && posts?.length === 0 && <p>No posts in this tab. Switch 👻</p>}
+		<div>
+			
+		</div>{!isLoading && posts?.length === 0 && <p>No posts in this tab. Switch 👻</p>}
 		{!isLoading && posts && posts.map((post) => (
 		  <Post key={post._id} post={post} />
 		))}
