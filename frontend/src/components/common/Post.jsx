@@ -86,6 +86,8 @@ const Post = ({ post }) => {
     },
   });
 
+  if (!post?._id) return null; // ✅ Ensure valid post before rendering
+
   const postOwner = post.user;
   const isMyPost = authUser?._id === postOwner?._id;
   const isApplied =
@@ -95,7 +97,6 @@ const Post = ({ post }) => {
     );
 
   const formattedDate = formatPostDate(post.createdAt);
-
   const hasExpired = post.expiresAt && new Date(post.expiresAt) <= new Date();
 
   const { mutate: deletePost, isPending: isDeleting } = useMutation({
@@ -148,6 +149,12 @@ const Post = ({ post }) => {
       toast.error("Please login to view applicants.");
       return;
     }
+
+    if (!post?._id) {
+      toast.error("Invalid post ID");
+      return;
+    }
+
     setIsFetchingApplicants(true);
     try {
       const res = await fetch(`/api/posts/applications/${post._id}`);
