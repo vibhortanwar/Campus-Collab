@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import LoginPage from "./pages/auth/login/LoginPage";
 import SignUpPage from "./pages/auth/signup/SignUpPage";
 import HomePage from "./pages/home/HomePage";
@@ -12,15 +12,22 @@ import StartPage from "./pages/extras/StartPage";
 import ErrorPage from "./pages/extras/ErrorPage";
 import AboutPage from "./pages/about/About";
 import Footer from "./components/common/Footer";
-import "./App.css"; // Import CSS file for styles
 
 function App() {
-  const { data: authUser, isLoading, error, isError } = useQuery({
+  const location = useLocation(); // 👈 get current path
+  const hideNavbarRoutes = ["/", "/login", "/signup"]; // 👈 routes where Navbar should be hidden
+
+  const {
+    data: authUser,
+    isLoading,
+    error,
+    isError,
+  } = useQuery({
     queryKey: ["authUser"],
     queryFn: async () => {
       try {
         const res = await fetch("/api/auth/me", {
-          credentials: "include", // Include credentials to send the cookie
+          credentials: "include",
         });
         const data = await res.json();
         if (data.error) return null;
@@ -44,37 +51,38 @@ function App() {
   }
 
   return (
-    <div className="app-container">
-      {authUser && <Navbar />}
-      <div className="content">
-        <Routes>
-          <Route
-            path="/"
-            element={authUser ? <HomePage /> : <StartPage />}
-          />
-          <Route path="/about" element={<AboutPage />} />
-          <Route
-            path="/signup"
-            element={!authUser ? <SignUpPage /> : <Navigate to="/" />}
-          />
-          <Route
-            path="/login"
-            element={!authUser ? <LoginPage /> : <Navigate to="/" />}
-          />
-          <Route
-            path="/notifications"
-            element={authUser ? <NotificationPage /> : <Navigate to="/login" />}
-          />
-          <Route
-            path="/profile/:enrollNo"
-            element={authUser ? <ProfilePage /> : <Navigate to="/login" />}
-          />
-          <Route path="*" element={<ErrorPage />} />
-        </Routes>
+    <>
+      <div className="flex flex-col min-h-screen">
+        {" "}
+        {/* ✅ Flex wrapper */}
+        {!hideNavbarRoutes.includes(location.pathname) && <Navbar />}
+        <main className="flex-grow">
+          <Routes>
+            <Route path="/" element={<StartPage />} />
+            <Route path="/home" element={<HomePage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route
+              path="/signup"
+              element={!authUser ? <SignUpPage /> : <Navigate to="/" />}
+            />
+            <Route
+              path="/login"
+              element={!authUser ? <LoginPage /> : <Navigate to="/" />}
+            />
+            <Route
+              path="/notifications"
+              element={
+                authUser ? <NotificationPage /> : <Navigate to="/login" />
+              }
+            />
+            <Route path="/profile/:enrollNo" element={<ProfilePage />} />
+            <Route path="*" element={<ErrorPage />} />
+          </Routes>
+        </main>
+        <Footer /> {/* ✅ Always pushed to bottom */}
+        <Toaster />
       </div>
-      <Footer />
-      <Toaster />
-    </div>
+    </>
   );
 }
 

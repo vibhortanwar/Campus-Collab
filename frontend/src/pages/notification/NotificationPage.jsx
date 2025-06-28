@@ -56,21 +56,14 @@ const NotificationPage = () => {
 	});
 
 	return (
-		<div className='w-full lg:w-1/2 mx-auto p-4 relative'>
+		<div className='w-1/2 mx-auto p-4'>
 			<div className='flex justify-between items-center'>
 				<p className='text-lg font-bold text-gray-800'>Notifications</p>
-				<div className='dropdown relative'>
-					<div tabIndex={0} role='button' className='text-[#123458] relative'>
+				<div className='dropdown'>
+					<div tabIndex={0} role='button'>
 						<IoSettingsOutline className='w-5 h-5' />
 					</div>
-					<ul
-						className='dropdown-content z-50 menu p-2 shadow bg-base-100 rounded-box w-52 absolute right-0 top-full mt-2'
-						style={{
-							overflow: "hidden",
-							boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-							maxWidth: "200px",
-						}}
-					>
+					<ul className='dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52'>
 						<li>
 							<button onClick={() => deleteNotifications.mutate()}>
 								Delete all notifications
@@ -108,7 +101,9 @@ const NotificationPage = () => {
 									{notification.from.fullName}
 								</div>{" "}
 								applied for your post{" "}
-								<div className='font-medium text-blue-400'>
+								<div
+									className='font-medium text-blue-400'
+								>
 									{notification.post.title}
 								</div>{" "}
 								<span className='text-sm text-gray-600'>({notification.count})</span>

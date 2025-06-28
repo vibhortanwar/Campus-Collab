@@ -1,8 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import React, { useState } from 'react';
-import toast from 'react-hot-toast';
-import { Link } from 'react-router-dom';
-import LoadingSpinner from './LoadingSpinner';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import React, { useState } from "react";
+import toast from "react-hot-toast";
+import { Link } from "react-router-dom";
+import LoadingSpinner from "./LoadingSpinner";
 import { formatPostDate } from "../../utils/date";
 import profile from "../../assets/Profile.jpg";
 import { MdDelete } from "react-icons/md";
@@ -45,7 +45,9 @@ const ViewApplicantsModal = ({ applicants, isOpen, closeModal }) => {
                   <span className="font-semibold text-white hover:underline">
                     {applicant.fullName}
                   </span>
-                  <span className="text-sm text-gray-500">@{applicant.enrollNo}</span>
+                  <span className="text-sm text-gray-500">
+                    @{applicant.enrollNo}
+                  </span>
                 </div>
                 <span className="text-xs text-gray-400">View Profile ↗</span>
               </a>
@@ -56,7 +58,10 @@ const ViewApplicantsModal = ({ applicants, isOpen, closeModal }) => {
         </div>
 
         <div className="modal-action">
-          <button className="btn bg-white text-[#123458] hover:bg-gray-800 hover:text-white" onClick={closeModal}>
+          <button
+            className="btn bg-white text-[#123458] hover:bg-gray-800 hover:text-white"
+            onClick={closeModal}
+          >
             Close
           </button>
         </div>
@@ -64,7 +69,6 @@ const ViewApplicantsModal = ({ applicants, isOpen, closeModal }) => {
     </dialog>
   );
 };
-
 
 const Post = ({ post }) => {
   const queryClient = useQueryClient();
@@ -83,11 +87,16 @@ const Post = ({ post }) => {
   });
 
   const postOwner = post.user;
-  const isMyPost = authUser?._id === post.user._id;
-  const isApplied = post.applications?.some(app =>
-    typeof app === 'object' ? app._id === authUser?._id : app === authUser?._id
-  );
+  const isMyPost = authUser?._id === postOwner?._id;
+  const isApplied =
+    authUser &&
+    post.applications?.some((app) =>
+      typeof app === "object" ? app._id === authUser._id : app === authUser._id
+    );
+
   const formattedDate = formatPostDate(post.createdAt);
+
+  const hasExpired = post.expiresAt && new Date(post.expiresAt) <= new Date();
 
   const { mutate: deletePost, isPending: isDeleting } = useMutation({
     mutationFn: async () => {
@@ -102,34 +111,43 @@ const Post = ({ post }) => {
     },
     onError: (err) => {
       toast.error(err.message);
-    }
+    },
   });
 
   const { mutate: toggleApplication, isPending: isApplying } = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/posts/applications/${post._id}`, { method: "POST" });
+      const res = await fetch(`/api/posts/applications/${post._id}`, {
+        method: "POST",
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
       return data;
     },
     onSuccess: () => {
-      toast.success(isApplied ? "Conciled" : "Applied");
+      toast.success(isApplied ? "Withdrawn" : "Applied");
       queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
     onError: (err) => {
       toast.error(err.message);
-    }
+    },
   });
-  const hasExpired = post.expiresAt && new Date(post.expiresAt) <= new Date();
 
   const handleDeletePost = () => deletePost();
 
   const handleApplyPost = () => {
-    if (!authUser || isApplying || isMyPost) return;
+    if (!authUser) {
+      toast.error("Please login to apply.");
+      return;
+    }
+    if (isApplying || isMyPost) return;
     toggleApplication();
   };
 
   const handleViewApplicantsClick = async () => {
+    if (!authUser) {
+      toast.error("Please login to view applicants.");
+      return;
+    }
     setIsFetchingApplicants(true);
     try {
       const res = await fetch(`/api/posts/applications/${post._id}`);
@@ -144,7 +162,7 @@ const Post = ({ post }) => {
     }
   };
 
-  if (isAuthLoading || !authUser) return <LoadingSpinner />;
+  if (isAuthLoading) return <LoadingSpinner />;
 
   return (
     <div className="border border-[#123458] rounded-md p-4 mb-6 shadow-sm">
@@ -163,21 +181,23 @@ const Post = ({ post }) => {
           >
             {postOwner.fullName}
           </Link>
-          <span className="text-sm text-gray-500">@{postOwner.enrollNo} · {formattedDate}</span>
+          <span className="text-sm text-gray-500">
+            @{postOwner.enrollNo} · {formattedDate}
+          </span>
         </div>
+
         {isMyPost && (
           <button
-          onClick={handleDeletePost}
-          className="ml-auto p-2 rounded-full hover:bg-white transition-colors text-[#123458]"
-          title="Delete Post"
-        >
-          {isDeleting ? (
-            <span className="text-sm">Deleting...</span>
-          ) : (
-            <MdDelete className="w-5 h-5" />
-          )}
-        </button>
-        
+            onClick={handleDeletePost}
+            className="ml-auto p-2 rounded-full hover:bg-white transition-colors text-[#123458]"
+            title="Delete Post"
+          >
+            {isDeleting ? (
+              <span className="text-sm">Deleting...</span>
+            ) : (
+              <MdDelete className="w-5 h-5" />
+            )}
+          </button>
         )}
       </div>
 
@@ -193,52 +213,57 @@ const Post = ({ post }) => {
       </div>
 
       <div className="flex items-center gap-3">
-      {!isMyPost && <button
-        onClick={handleApplyPost}
-        disabled={isMyPost || isApplying || hasExpired}
-        className={`px-4 py-1.5 text-sm rounded-md transition-colors duration-200 font-medium
-          ${hasExpired
-            ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-            : isApplied
-            ? "border border-red text-red-600 hover:bg-red-600 hover:text-white"
-            : "bg-[#123458] text-white hover:bg-[#0f2d4d]"
-          }
-          ${isApplying ? "opacity-50 cursor-not-allowed" : ""}
-        `}
-      >
-        {hasExpired
-          ? "Closed"
-          : isApplying
-          ? "Processing..."
-          : isApplied
-          ? "Withdraw"
-          : "Apply"}
-      </button>}
+        {!isMyPost && (
+          <button
+            onClick={handleApplyPost}
+            disabled={isApplying || hasExpired}
+            className={`px-4 py-1.5 text-sm rounded-md transition-colors duration-200 font-medium
+              ${
+                hasExpired
+                  ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                  : isApplied
+                  ? "border border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
+                  : "bg-[#123458] text-white hover:bg-[#0f2d4d]"
+              }
+              ${isApplying ? "opacity-50 cursor-not-allowed" : ""}
+            `}
+          >
+            {hasExpired
+              ? "Closed"
+              : isApplying
+              ? "Processing..."
+              : isApplied
+              ? "Withdraw"
+              : "Apply"}
+          </button>
+        )}
 
         <span className="text-sm text-gray-600">
           Total applications: {post.applications.length}
         </span>
       </div>
+
       {post.expiresAt && !hasExpired && (
         <p className="text-sm text-[#123458] mt-2">
           Deadline: {new Date(post.expiresAt).toLocaleString()}
         </p>
       )}
+
       {isMyPost && (
         <>
           <button
             onClick={handleViewApplicantsClick}
             disabled={isFetchingApplicants}
             className={`mt-3 px-4 py-1.5 text-sm rounded-md transition-colors duration-200 font-medium border
-              ${isFetchingApplicants
-                ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                : "bg-white border-[#123458] text-[#123458] hover:bg-[#123458] hover:text-white"
+              ${
+                isFetchingApplicants
+                  ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                  : "bg-white border-[#123458] text-[#123458] hover:bg-[#123458] hover:text-white"
               }
             `}
           >
             {isFetchingApplicants ? "Loading..." : "View Applicants"}
           </button>
-
 
           <ViewApplicantsModal
             applicants={applicants}

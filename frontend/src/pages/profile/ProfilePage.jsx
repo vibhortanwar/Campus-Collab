@@ -88,7 +88,7 @@ const ProfilePage = () => {
 
   return (
     <div className="w-full flex justify-center min-h-screen p-4">
-      <div className="w-full lg:w-1/2 p-6">
+      <div className="w-1/2 p-6">
         {isLoading && <ProfileHeaderSkeleton />}
         {!isLoading && !user && (
           <p className="text-center text-lg mt-4">User not found</p>
