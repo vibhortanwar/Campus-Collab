@@ -14,6 +14,7 @@ import AboutPage from "./pages/about/About";
 import Footer from "./components/common/Footer";
 
 function App() {
+<<<<<<< HEAD
   const location = useLocation(); // 👈 get current path
   const hideNavbarRoutes = ["/", "/login", "/signup"]; // 👈 routes where Navbar should be hidden
 
@@ -24,6 +25,10 @@ function App() {
     isError,
   } = useQuery({
     queryKey: ["authUser"],
+=======
+  const { data: authUser, isLoading, error, isError } = useQuery({
+    queryKey: ['authUser'],
+>>>>>>> parent of 6b04c9d (Fiexed the footer)
     queryFn: async () => {
       try {
         const res = await fetch("/api/auth/me", {
@@ -45,13 +50,14 @@ function App() {
   if (isLoading) {
     return (
       <div>
-        <LoadingSpinner size="lg" />
+        <LoadingSpinner size='lg' />
       </div>
     );
   }
 
   return (
     <>
+<<<<<<< HEAD
       <div className="flex flex-col min-h-screen">
         {" "}
         {/* ✅ Flex wrapper */}
@@ -80,6 +86,20 @@ function App() {
           </Routes>
         </main>
         <Footer /> {/* ✅ Always pushed to bottom */}
+=======
+      <div >
+        {authUser && <Navbar />}
+        <Routes>
+          <Route path="/" element={authUser ? <HomePage /> : <StartPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/signup" element={!authUser ? <SignUpPage /> : <Navigate to="/" />} />
+          <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
+          <Route path="/notifications" element={authUser ? <NotificationPage /> : <Navigate to="/login" />} />
+          <Route path="/profile/:enrollNo" element={authUser ? <ProfilePage /> : <Navigate to="/login" />} />
+          <Route path="*" element={<ErrorPage />} />
+        </Routes>
+        <Footer/>
+>>>>>>> parent of 6b04c9d (Fiexed the footer)
         <Toaster />
       </div>
     </>
