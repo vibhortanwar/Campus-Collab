@@ -14,9 +14,10 @@ import AboutPage from "./pages/about/About";
 import Footer from "./components/common/Footer";
 
 function App() {
-<<<<<<< HEAD
-  const location = useLocation(); // 👈 get current path
-  const hideNavbarRoutes = ["/", "/login", "/signup"]; // 👈 routes where Navbar should be hidden
+  const location = useLocation();
+
+  // Routes where Navbar should be hidden
+  const hideNavbarRoutes = ["/", "/login", "/signup"];
 
   const {
     data: authUser,
@@ -25,23 +26,21 @@ function App() {
     isError,
   } = useQuery({
     queryKey: ["authUser"],
-=======
-  const { data: authUser, isLoading, error, isError } = useQuery({
-    queryKey: ['authUser'],
->>>>>>> parent of 6b04c9d (Fiexed the footer)
     queryFn: async () => {
       try {
         const res = await fetch("/api/auth/me", {
           credentials: "include",
         });
         const data = await res.json();
+
         if (data.error) return null;
         if (!res.ok) {
           throw new Error(data.error || "Something went wrong!");
         }
+
         return data;
       } catch (error) {
-        throw new Error(error);
+        throw new Error(error.message || "Something went wrong!");
       }
     },
     retry: false,
@@ -50,59 +49,55 @@ function App() {
   if (isLoading) {
     return (
       <div>
-        <LoadingSpinner size='lg' />
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
 
+  const shouldHideNavbar = hideNavbarRoutes.includes(location.pathname);
+
   return (
-    <>
-<<<<<<< HEAD
-      <div className="flex flex-col min-h-screen">
-        {" "}
-        {/* ✅ Flex wrapper */}
-        {!hideNavbarRoutes.includes(location.pathname) && <Navbar />}
-        <main className="flex-grow">
-          <Routes>
-            <Route path="/" element={<StartPage />} />
-            <Route path="/home" element={<HomePage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route
-              path="/signup"
-              element={!authUser ? <SignUpPage /> : <Navigate to="/" />}
-            />
-            <Route
-              path="/login"
-              element={!authUser ? <LoginPage /> : <Navigate to="/" />}
-            />
-            <Route
-              path="/notifications"
-              element={
-                authUser ? <NotificationPage /> : <Navigate to="/login" />
-              }
-            />
-            <Route path="/profile/:enrollNo" element={<ProfilePage />} />
-            <Route path="*" element={<ErrorPage />} />
-          </Routes>
-        </main>
-        <Footer /> {/* ✅ Always pushed to bottom */}
-=======
-      <div >
-        {authUser && <Navbar />}
+    <div className="flex flex-col min-h-screen">
+      {/* ✅ Navbar Logic (both route + auth combined) */}
+      {!shouldHideNavbar && authUser && <Navbar />}
+
+      <main className="flex-grow">
         <Routes>
           <Route path="/" element={authUser ? <HomePage /> : <StartPage />} />
           <Route path="/about" element={<AboutPage />} />
-          <Route path="/signup" element={!authUser ? <SignUpPage /> : <Navigate to="/" />} />
-          <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
-          <Route path="/notifications" element={authUser ? <NotificationPage /> : <Navigate to="/login" />} />
-          <Route path="/profile/:enrollNo" element={authUser ? <ProfilePage /> : <Navigate to="/login" />} />
+
+          <Route
+            path="/signup"
+            element={!authUser ? <SignUpPage /> : <Navigate to="/" />}
+          />
+          <Route
+            path="/login"
+            element={!authUser ? <LoginPage /> : <Navigate to="/" />}
+          />
+
+          <Route
+            path="/notifications"
+            element={
+              authUser ? <NotificationPage /> : <Navigate to="/login" />
+            }
+          />
+
+          <Route
+            path="/profile/:enrollNo"
+            element={
+              authUser ? <ProfilePage /> : <Navigate to="/login" />
+            }
+          />
+
           <Route path="*" element={<ErrorPage />} />
         </Routes>
-        <Footer/>
->>>>>>> parent of 6b04c9d (Fiexed the footer)
-        <Toaster />
-      </div>
-    </>
+      </main>
+
+      {/* ✅ Footer always at bottom */}
+      <Footer />
+
+      <Toaster />
+    </div>
   );
 }
 
