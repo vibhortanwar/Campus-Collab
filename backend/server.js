@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import path from "path";
+import { fileURLToPath } from "url";
 import { authRouter } from "./routes/auth.js";
 import { userRouter } from "./routes/user.js";
 import cloudinary from "cloudinary";
@@ -9,10 +10,13 @@ import cookieParser from "cookie-parser";
 import { postRouter } from "./routes/post.js";
 import { notificationRouter } from "./routes/notification.js";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 
-cloudinary.v2; 
-dotenv.config();
+cloudinary.v2;
+dotenv.config({ path: path.resolve(__dirname, "../backend/.env") });
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -26,7 +30,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit:'50mb', extended: true }));
 app.use(cookieParser());
 
-const __dirname = path.resolve();
+// __dirname is defined at the top via fileURLToPath(import.meta.url)
 
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);

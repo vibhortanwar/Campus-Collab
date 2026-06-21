@@ -17,13 +17,11 @@ function App() {
   const location = useLocation();
 
   // Routes where Navbar should be hidden
-  const hideNavbarRoutes = ["/", "/login", "/signup"];
+  const hideNavbarRoutes = ["/login", "/signup"];
 
   const {
     data: authUser,
     isLoading,
-    error,
-    isError,
   } = useQuery({
     queryKey: ["authUser"],
     queryFn: async () => {
@@ -40,7 +38,7 @@ function App() {
 
         return data;
       } catch (error) {
-        throw new Error(error.message || "Something went wrong!");
+        return null;
       }
     },
     retry: false,
@@ -48,7 +46,7 @@ function App() {
 
   if (isLoading) {
     return (
-      <div>
+      <div className="flex items-center justify-center min-h-screen bg-[#0d1117]">
         <LoadingSpinner size="lg" />
       </div>
     );
@@ -57,13 +55,18 @@ function App() {
   const shouldHideNavbar = hideNavbarRoutes.includes(location.pathname);
 
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* ✅ Navbar Logic (both route + auth combined) */}
-      {!shouldHideNavbar && authUser && <Navbar />}
+    <div className="flex flex-col min-h-screen bg-[#0d1117] text-slate-100">
+      {/* Navbar shown on all pages except login/signup */}
+      {!shouldHideNavbar && <Navbar />}
 
       <main className="flex-grow">
         <Routes>
+          {/* Landing page - shows StartPage or HomePage based on auth */}
           <Route path="/" element={authUser ? <HomePage /> : <StartPage />} />
+
+          {/* /home is accessible to EVERYONE including guests */}
+          <Route path="/home" element={<HomePage />} />
+
           <Route path="/about" element={<AboutPage />} />
 
           <Route
@@ -93,10 +96,18 @@ function App() {
         </Routes>
       </main>
 
-      {/* ✅ Footer always at bottom */}
+      {/* Footer always at bottom */}
       <Footer />
 
-      <Toaster />
+      <Toaster
+        toastOptions={{
+          style: {
+            background: "#1e2a3a",
+            color: "#e2e8f0",
+            border: "1px solid #2d4a6e",
+          },
+        }}
+      />
     </div>
   );
 }

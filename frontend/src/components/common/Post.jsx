@@ -1,103 +1,106 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import LoadingSpinner from "./LoadingSpinner";
 import { formatPostDate } from "../../utils/date";
 import profile from "../../assets/Profile.jpg";
 import { MdDelete } from "react-icons/md";
+import { IoCopyOutline } from "react-icons/io5";
+import { FiUsers } from "react-icons/fi";
 
+/* ─── Applicants Modal ──────────────────────────────────────── */
 const ViewApplicantsModal = ({ applicants, isOpen, closeModal }) => {
   const [searchQuery, setSearchQuery] = useState("");
+  if (!isOpen) return null;
 
-  const filteredApplicants = applicants?.filter((applicant) => {
+  const filtered = applicants?.filter((a) => {
     const q = searchQuery.toLowerCase();
-    return (
-      applicant.fullName.toLowerCase().includes(q) ||
-      applicant.enrollNo.toLowerCase().includes(q)
-    );
+    return a.fullName.toLowerCase().includes(q) || a.enrollNo.toLowerCase().includes(q);
   });
 
   return (
-    <dialog open={isOpen} className="modal">
-      <div className="modal-box max-w-lg">
-        <h3 className="font-bold text-lg mb-4 text-white">Applicants</h3>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal} />
+      <div className="relative w-full max-w-md bg-[#0f1923] border border-[#2d4a6e] rounded-2xl shadow-2xl animate-scale-in">
+        <div className="flex items-center justify-between p-5 border-b border-[#1e2d3d]">
+          <h3 className="font-bold text-lg text-white flex items-center gap-2">
+            <FiUsers className="text-blue-400" /> Applicants ({applicants?.length || 0})
+          </h3>
+          <button onClick={closeModal} className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-[#1e2d3d] transition-colors">✕</button>
+        </div>
 
-        <input
-          type="text"
-          placeholder="Search by name or enroll no..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="input input-bordered w-full mb-4"
-        />
+        <div className="p-4">
+          <input
+            type="text"
+            placeholder="Search by name or enroll no..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full mb-4 px-3 py-2 bg-[#0d1117] border border-[#2d4a6e] rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors text-sm"
+            autoFocus
+          />
 
-        <div className="space-y-3 max-h-60 overflow-y-auto">
-          {filteredApplicants?.length > 0 ? (
-            filteredApplicants.map((applicant) => (
+          <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+            {filtered?.length > 0 ? filtered.map((applicant) => (
               <a
                 key={applicant._id}
                 href={`/profile/${applicant.enrollNo}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex justify-between items-center border border-[#d1d5db] shadow-sm rounded-md px-4 py-2 hover:bg-[#f5faff] transition duration-200"
+                className="flex justify-between items-center border border-[#1e2d3d] rounded-xl px-4 py-3 hover:bg-[#1e2d3d] hover:border-[#2d4a6e] transition-all duration-200 group"
               >
-                <div className="flex flex-col">
-                  <span className="font-semibold text-white hover:underline">
-                    {applicant.fullName}
-                  </span>
-                  <span className="text-sm text-gray-500">
-                    @{applicant.enrollNo}
-                  </span>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center text-white text-sm font-bold">
+                    {applicant.fullName?.[0]?.toUpperCase()}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-slate-200 text-sm group-hover:text-white transition-colors">{applicant.fullName}</span>
+                    <span className="text-xs text-slate-500">@{applicant.enrollNo}</span>
+                  </div>
                 </div>
-                <span className="text-xs text-gray-400">View Profile ↗</span>
+                <span className="text-xs text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">View ↗</span>
               </a>
-            ))
-          ) : (
-            <p className="text-center text-gray-600">No matching applicants</p>
-          )}
-        </div>
-
-        <div className="modal-action">
-          <button
-            className="btn bg-white text-[#123458] hover:bg-gray-800 hover:text-white"
-            onClick={closeModal}
-          >
-            Close
-          </button>
+            )) : (
+              <p className="text-center text-slate-500 py-6 text-sm">No matching applicants</p>
+            )}
+          </div>
         </div>
       </div>
-    </dialog>
+    </div>
   );
 };
 
+/* ─── Post Card ─────────────────────────────────────────────── */
 const Post = ({ post }) => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [applicants, setApplicants] = useState([]);
   const [isApplicantsModalOpen, setIsApplicantsModalOpen] = useState(false);
   const [isFetchingApplicants, setIsFetchingApplicants] = useState(false);
+  const [justApplied, setJustApplied] = useState(false);
 
   const { data: authUser, isLoading: isAuthLoading } = useQuery({
     queryKey: ["authUser"],
     queryFn: async () => {
       const res = await fetch("/api/auth/me");
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Something went wrong");
+      if (!res.ok) return null;
       return data;
     },
+    retry: false,
   });
 
-  if (!post?._id) return null; // ✅ Ensure valid post before rendering
+  if (!post?._id) return null;
+  if (isAuthLoading) return <LoadingSpinner />;
 
   const postOwner = post.user;
   const isMyPost = authUser?._id === postOwner?._id;
-  const isApplied =
-    authUser &&
-    post.applications?.some((app) =>
-      typeof app === "object" ? app._id === authUser._id : app === authUser._id
-    );
-
+  const isApplied = authUser && post.applications?.some((app) =>
+    typeof app === "object" ? app._id === authUser._id : app === authUser._id
+  );
   const formattedDate = formatPostDate(post.createdAt);
   const hasExpired = post.expiresAt && new Date(post.expiresAt) <= new Date();
+  const appCount = post.applications?.length || 0;
 
   const { mutate: deletePost, isPending: isDeleting } = useMutation({
     mutationFn: async () => {
@@ -107,54 +110,50 @@ const Post = ({ post }) => {
       return data;
     },
     onSuccess: () => {
-      toast.success("Post deleted successfully");
+      toast.success("Post deleted");
       queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
-    onError: (err) => {
-      toast.error(err.message);
-    },
+    onError: (err) => toast.error(err.message),
   });
 
   const { mutate: toggleApplication, isPending: isApplying } = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/posts/applications/${post._id}`, {
-        method: "POST",
-      });
+      const res = await fetch(`/api/posts/applications/${post._id}`, { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
       return data;
     },
     onSuccess: () => {
-      toast.success(isApplied ? "Withdrawn" : "Applied");
+      if (!isApplied) setJustApplied(true);
+      toast.success(isApplied ? "Application withdrawn" : "Applied successfully! 🎉");
       queryClient.invalidateQueries({ queryKey: ["posts"] });
+      setTimeout(() => setJustApplied(false), 1000);
     },
-    onError: (err) => {
-      toast.error(err.message);
-    },
+    onError: (err) => toast.error(err.message),
   });
-
-  const handleDeletePost = () => deletePost();
 
   const handleApplyPost = () => {
     if (!authUser) {
       toast.error("Please login to apply.");
+      navigate("/login");
       return;
     }
     if (isApplying || isMyPost) return;
     toggleApplication();
   };
 
-  const handleViewApplicantsClick = async () => {
-    if (!authUser) {
-      toast.error("Please login to view applicants.");
-      return;
+  const handleShare = async () => {
+    const url = `${window.location.origin}/home`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied to clipboard!");
+    } catch {
+      toast.error("Could not copy link.");
     }
+  };
 
-    if (!post?._id) {
-      toast.error("Invalid post ID");
-      return;
-    }
-
+  const handleViewApplicants = async () => {
+    if (!authUser) { toast.error("Please login to view applicants."); return; }
     setIsFetchingApplicants(true);
     try {
       const res = await fetch(`/api/posts/applications/${post._id}`);
@@ -169,117 +168,134 @@ const Post = ({ post }) => {
     }
   };
 
-  if (isAuthLoading) return <LoadingSpinner />;
-
   return (
-    <div className="border border-[#123458] rounded-md p-4 mb-6 shadow-sm">
-      <div className="flex items-center mb-3 gap-3">
-        <Link to={`/profile/${postOwner.enrollNo}`}>
-          <img
-            src={postOwner.profileImg || profile}
-            alt="profile"
-            className="w-10 h-10 rounded-full object-cover"
-          />
-        </Link>
-        <div className="flex flex-col">
-          <Link
-            to={`/profile/${postOwner.enrollNo}`}
-            className="font-medium text-[#123458] font-bold"
-          >
-            {postOwner.fullName}
+    <>
+      <div className="border border-[#1e2d3d] rounded-xl p-5 mb-4 bg-[#0f1923] card-hover animate-slide-up group">
+        {/* Post Header */}
+        <div className="flex items-start mb-4 gap-3">
+          <Link to={authUser ? `/profile/${postOwner.enrollNo}` : "/login"} className="flex-shrink-0">
+            <img
+              src={postOwner.profileImg || profile}
+              alt="profile"
+              className="w-10 h-10 rounded-full object-cover border-2 border-[#2d4a6e] hover:border-blue-500 transition-colors"
+            />
           </Link>
-          <span className="text-sm text-gray-500">
-            @{postOwner.enrollNo} · {formattedDate}
-          </span>
+
+          <div className="flex flex-col flex-1 min-w-0">
+            <Link
+              to={authUser ? `/profile/${postOwner.enrollNo}` : "/login"}
+              className="font-semibold text-white hover:text-blue-400 transition-colors leading-tight"
+            >
+              {postOwner.fullName}
+            </Link>
+            <span className="text-xs text-slate-500">@{postOwner.enrollNo} · {formattedDate}</span>
+          </div>
+
+          {/* Delete — only post owner */}
+          {isMyPost && (
+            <button
+              onClick={() => deletePost()}
+              className="ml-auto p-2 rounded-lg hover:bg-red-900/30 transition-colors text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100"
+              title="Delete Post"
+            >
+              {isDeleting
+                ? <span className="text-xs text-slate-400">...</span>
+                : <MdDelete className="w-4 h-4" />}
+            </button>
+          )}
         </div>
 
-        {isMyPost && (
-          <button
-            onClick={handleDeletePost}
-            className="ml-auto p-2 rounded-full hover:bg-white transition-colors text-[#123458]"
-            title="Delete Post"
-          >
-            {isDeleting ? (
-              <span className="text-sm">Deleting...</span>
+        {/* Post Content */}
+        <div className="mb-4 pl-[52px]">
+          <p className="text-slate-200 leading-relaxed whitespace-pre-wrap text-[15px]">{post.text}</p>
+          {post.img && (
+            <img
+              src={post.img}
+              alt="post"
+              className="mt-3 w-full max-h-[420px] object-cover rounded-xl border border-[#1e2d3d] hover:border-[#2d4a6e] transition-colors"
+            />
+          )}
+        </div>
+
+        {/* Deadline / Expired badge */}
+        {post.expiresAt && (
+          <div className="pl-[52px] mb-3">
+            {hasExpired ? (
+              <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                🔒 Closed
+              </span>
             ) : (
-              <MdDelete className="w-5 h-5" />
+              <span className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-amber-900/30 text-amber-400 border border-amber-800/40">
+                ⏰ Deadline: {new Date(post.expiresAt).toLocaleString()}
+              </span>
             )}
-          </button>
+          </div>
         )}
-      </div>
 
-      <div className="mb-4">
-        <p className="mb-2 text-[#123458]">{post.text}</p>
-        {post.img && (
-          <img
-            src={post.img}
-            alt="post"
-            className="max-w-full max-h-[400px] w-auto h-auto rounded-md object-contain mx-auto"
-          />
-        )}
-      </div>
-
-      <div className="flex items-center gap-3">
-        {!isMyPost && (
-          <button
-            onClick={handleApplyPost}
-            disabled={isApplying || hasExpired}
-            className={`px-4 py-1.5 text-sm rounded-md transition-colors duration-200 font-medium
-              ${
-                hasExpired
-                  ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+        {/* Action Row */}
+        <div className="pl-[52px] flex items-center gap-2 pt-3 border-t border-[#1e2d3d]">
+          {/* Apply / Withdraw — not my post */}
+          {!isMyPost && (
+            <button
+              onClick={handleApplyPost}
+              disabled={isApplying || hasExpired}
+              className={`px-4 py-1.5 text-sm rounded-full font-medium transition-all duration-200 active:scale-95
+                ${hasExpired
+                  ? "bg-[#1a2333] text-slate-500 cursor-not-allowed border border-[#1e2d3d]"
+                  : !authUser
+                  ? "border border-blue-500/40 text-blue-300 hover:bg-blue-600/20"
                   : isApplied
-                  ? "border border-red-600 text-red-600 hover:bg-red-600 hover:text-white"
-                  : "bg-[#123458] text-white hover:bg-[#0f2d4d]"
-              }
-              ${isApplying ? "opacity-50 cursor-not-allowed" : ""}
-            `}
-          >
-            {hasExpired
-              ? "Closed"
-              : isApplying
-              ? "Processing..."
-              : isApplied
-              ? "Withdraw"
-              : "Apply"}
-          </button>
-        )}
+                  ? "border border-red-500/50 text-red-400 hover:bg-red-900/20"
+                  : `bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-500 hover:to-cyan-400 shadow-md shadow-blue-900/30 ${justApplied ? "scale-105" : ""}`
+                }
+                ${isApplying ? "opacity-50 cursor-not-allowed" : ""}
+              `}
+            >
+              {hasExpired ? "Closed"
+                : isApplying ? "..."
+                : !authUser ? "Login to Apply"
+                : isApplied ? "Withdraw"
+                : "Apply"}
+            </button>
+          )}
 
-        <span className="text-sm text-gray-600">
-          Total applications: {post.applications.length}
-        </span>
+          {/* View Applicants — post owner only */}
+          {isMyPost && (
+            <button
+              onClick={handleViewApplicants}
+              disabled={isFetchingApplicants}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-full border border-[#2d4a6e] text-slate-300 hover:bg-[#1e3050] hover:text-white hover:border-blue-500 transition-all duration-200"
+            >
+              <FiUsers className="w-3.5 h-3.5" />
+              {isFetchingApplicants ? "Loading..." : "Applicants"}
+            </button>
+          )}
+
+          {/* Share */}
+          <button
+            onClick={handleShare}
+            className="p-2 rounded-full text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 transition-all duration-200 ml-auto"
+            title="Copy link"
+          >
+            <IoCopyOutline className="w-4 h-4" />
+          </button>
+
+          {/* Application count badge */}
+          {appCount > 0 && (
+            <span className="text-xs text-slate-500 flex items-center gap-1">
+              <FiUsers className="w-3 h-3" />
+              {appCount}
+            </span>
+          )}
+        </div>
       </div>
 
-      {post.expiresAt && !hasExpired && (
-        <p className="text-sm text-[#123458] mt-2">
-          Deadline: {new Date(post.expiresAt).toLocaleString()}
-        </p>
-      )}
-
-      {isMyPost && (
-        <>
-          <button
-            onClick={handleViewApplicantsClick}
-            disabled={isFetchingApplicants}
-            className={`mt-3 px-4 py-1.5 text-sm rounded-md transition-colors duration-200 font-medium border
-              ${
-                isFetchingApplicants
-                  ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                  : "bg-white border-[#123458] text-[#123458] hover:bg-[#123458] hover:text-white"
-              }
-            `}
-          >
-            {isFetchingApplicants ? "Loading..." : "View Applicants"}
-          </button>
-
-          <ViewApplicantsModal
-            applicants={applicants}
-            isOpen={isApplicantsModalOpen}
-            closeModal={() => setIsApplicantsModalOpen(false)}
-          />
-        </>
-      )}
-    </div>
+      <ViewApplicantsModal
+        applicants={applicants}
+        isOpen={isApplicantsModalOpen}
+        closeModal={() => setIsApplicantsModalOpen(false)}
+      />
+    </>
   );
 };
 

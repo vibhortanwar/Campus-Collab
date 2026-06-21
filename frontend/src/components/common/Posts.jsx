@@ -40,7 +40,7 @@ const Posts = ({ feedType, enrollNo, userId }) => {
   }, [feedType, enrollNo, userId, refetch]);
 
   return (
-    <div className="text-gray-900">
+    <div className="text-slate-200">
       {isLoading && (
         <>
           <PostSkeleton />
@@ -50,7 +50,7 @@ const Posts = ({ feedType, enrollNo, userId }) => {
       )}
 
       {!isLoading && posts?.length === 0 && (
-        <p>No posts in this tab. Switch 👻</p>
+        <p className="text-center text-slate-500 py-12 text-lg">No posts yet. Be the first! 👻</p>
       )}
 
       {!isLoading &&
