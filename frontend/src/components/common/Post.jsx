@@ -91,9 +91,14 @@ const Post = ({ post }) => {
   });
 
   if (!post?._id) return null;
-  if (isAuthLoading) return <LoadingSpinner />;
 
   const postOwner = post.user;
+
+  // Guard: if the populated user is missing, skip rendering this post
+  if (!postOwner) return null;
+
+  if (isAuthLoading) return <LoadingSpinner />;
+
   const isMyPost = authUser?._id === postOwner?._id;
   const isApplied = authUser && post.applications?.some((app) =>
     typeof app === "object" ? app._id === authUser._id : app === authUser._id

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import Posts from "../../components/common/Posts";
 import CreatePost from "./CreatePost";
+import ErrorBoundary from "../../components/common/ErrorBoundary";
 import { useQuery } from "@tanstack/react-query";
 import profile from "../../assets/Profile.jpg";
 import { FiHome, FiBell, FiUser, FiInfo, FiEdit } from "react-icons/fi";
@@ -137,7 +138,9 @@ const HomePage = () => {
           )}
 
           {/* Posts feed */}
-          <Posts authUser={authUser} />
+          <ErrorBoundary>
+            <Posts authUser={authUser} />
+          </ErrorBoundary>
         </main>
       </div>
     </div>

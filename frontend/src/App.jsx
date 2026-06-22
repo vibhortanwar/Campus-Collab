@@ -62,7 +62,7 @@ function App() {
       <main className="flex-grow">
         <Routes>
           {/* Landing page - shows StartPage or HomePage based on auth */}
-          <Route path="/" element={authUser ? <HomePage /> : <StartPage />} />
+          <Route path="/" element={authUser ? <Navigate to="/home" /> : <StartPage />} />
 
           {/* /home is accessible to EVERYONE including guests */}
           <Route path="/home" element={<HomePage />} />

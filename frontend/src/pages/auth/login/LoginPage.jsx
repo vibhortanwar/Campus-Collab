@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -9,6 +9,7 @@ const LoginPage = () => {
     password: "",
   });
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { mutate: loginMutation, isPending } = useMutation({
     mutationFn: async ({ email, password }) => {
       const res = await fetch("/api/auth/login", {
@@ -30,6 +31,7 @@ const LoginPage = () => {
     onSuccess: () => {
       toast.success("Login successful");
       queryClient.invalidateQueries({ queryKey: ["authUser"] });
+      navigate("/home");
     },
     onError: (error) => {
       toast.error(error.message || "Login failed");
