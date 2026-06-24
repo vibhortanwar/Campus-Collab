@@ -248,19 +248,19 @@ const Post = ({ post }) => {
                 ${hasExpired
                   ? "bg-[#1a2333] text-slate-500 cursor-not-allowed border border-[#1e2d3d]"
                   : !authUser
-                  ? "border border-blue-500/40 text-blue-300 hover:bg-blue-600/20"
-                  : isApplied
-                  ? "border border-red-500/50 text-red-400 hover:bg-red-900/20"
-                  : `bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-500 hover:to-cyan-400 shadow-md shadow-blue-900/30 ${justApplied ? "scale-105" : ""}`
+                    ? "border border-blue-500/40 text-blue-300 hover:bg-blue-600/20"
+                    : isApplied
+                      ? "border border-red-500/50 text-red-400 hover:bg-red-900/20"
+                      : `bg-gradient-to-r from-blue-600 to-blue-500 text-white hover:from-blue-500 hover:to-cyan-400 shadow-md shadow-blue-900/30 ${justApplied ? "scale-105" : ""}`
                 }
                 ${isApplying ? "opacity-50 cursor-not-allowed" : ""}
               `}
             >
               {hasExpired ? "Closed"
                 : isApplying ? "..."
-                : !authUser ? "Login to Apply"
-                : isApplied ? "Withdraw"
-                : "Apply"}
+                  : !authUser ? "Login to Apply"
+                    : isApplied ? "Withdraw"
+                      : "Apply"}
             </button>
           )}
 
@@ -275,15 +275,6 @@ const Post = ({ post }) => {
               {isFetchingApplicants ? "Loading..." : "Applicants"}
             </button>
           )}
-
-          {/* Share */}
-          <button
-            onClick={handleShare}
-            className="p-2 rounded-full text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 transition-all duration-200 ml-auto"
-            title="Copy link"
-          >
-            <IoCopyOutline className="w-4 h-4" />
-          </button>
 
           {/* Application count badge */}
           {appCount > 0 && (

@@ -50,7 +50,7 @@ const Posts = ({ feedType, enrollNo, userId }) => {
       )}
 
       {!isLoading && posts?.length === 0 && (
-        <p className="text-center text-slate-500 py-12 text-lg">No posts yet. Be the first! 👻</p>
+        <p className="text-center text-slate-500 py-12 text-lg">No posts yet</p>
       )}
 
       {!isLoading &&
