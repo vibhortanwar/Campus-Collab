@@ -95,7 +95,7 @@ const ProfilePage = () => {
 
   const tabs = [
     { key: "posts", label: "Posts", icon: <FiBookOpen className="w-4 h-4" /> },
-    { key: "applications", label: "Applications", icon: <FiUsers className="w-4 h-4" /> },
+    ...(authUser ? [{ key: "applications", label: "Applications", icon: <FiUsers className="w-4 h-4" /> }] : []),
   ];
 
   return (

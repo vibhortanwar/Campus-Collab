@@ -216,7 +216,7 @@ const SignUpPage = () => {
               </div>
             </div>
 
-            <div className="w-full flex flex-col items-center justify-center py-4 min-h-[60px]">
+            <div className="w-full flex flex-col items-center justify-center py-4 min-h-[60px] gap-3">
               {googleLoading ? (
                 <div className="flex items-center justify-center gap-2 text-gray-500 text-sm">
                   <svg className="animate-spin h-5 w-5 text-[#123458]" viewBox="0 0 24 24" fill="none">
@@ -228,6 +228,13 @@ const SignUpPage = () => {
               ) : (
                 <div id="google-signup-btn" className="w-full flex justify-center hover:opacity-90 transition-opacity"></div>
               )}
+
+              <Link
+                to="/home"
+                className="w-full max-w-[320px] text-center py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition duration-300 font-semibold text-sm"
+              >
+                Continue as Guest
+              </Link>
             </div>
 
             {isVerifying && (

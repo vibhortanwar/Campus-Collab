@@ -178,7 +178,7 @@ const Post = ({ post }) => {
       <div className="border border-[#1e2d3d] rounded-xl p-5 mb-4 bg-[#0f1923] card-hover animate-slide-up group">
         {/* Post Header */}
         <div className="flex items-start mb-4 gap-3">
-          <Link to={authUser ? `/profile/${postOwner.enrollNo}` : "/login"} className="flex-shrink-0">
+          <Link to={`/profile/${postOwner.enrollNo}`} className="flex-shrink-0">
             <img
               src={postOwner.profileImg || profile}
               alt="profile"
@@ -188,7 +188,7 @@ const Post = ({ post }) => {
 
           <div className="flex flex-col flex-1 min-w-0">
             <Link
-              to={authUser ? `/profile/${postOwner.enrollNo}` : "/login"}
+              to={`/profile/${postOwner.enrollNo}`}
               className="font-semibold text-white hover:text-blue-400 transition-colors leading-tight"
             >
               {postOwner.fullName}

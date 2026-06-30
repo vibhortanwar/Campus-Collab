@@ -198,7 +198,7 @@ const LoginPage = () => {
           <span className="border-b w-[30%] border-gray-200"></span>
         </div>
 
-        <div className="w-full flex flex-col items-center justify-center min-h-[50px]">
+        <div className="w-full flex flex-col items-center justify-center min-h-[50px] gap-3">
           {googleLoading ? (
             <div className="flex items-center justify-center gap-2 text-gray-400 text-sm">
               <svg className="animate-spin h-5 w-5 text-[#123458]" viewBox="0 0 24 24" fill="none">
@@ -210,6 +210,13 @@ const LoginPage = () => {
           ) : (
             <div id="google-login-btn" className="w-full flex justify-center hover:opacity-90 transition-opacity"></div>
           )}
+
+          <Link
+            to="/home"
+            className="w-full max-w-[320px] text-center py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition duration-300 font-semibold text-sm"
+          >
+            Continue as Guest
+          </Link>
         </div>
 
         {isVerifying && (

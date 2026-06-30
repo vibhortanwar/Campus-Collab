@@ -87,9 +87,7 @@ function App() {
 
           <Route
             path="/profile/:enrollNo"
-            element={
-              authUser ? <ProfilePage /> : <Navigate to="/login" />
-            }
+            element={<ProfilePage />}
           />
 
           <Route path="*" element={<ErrorPage />} />
